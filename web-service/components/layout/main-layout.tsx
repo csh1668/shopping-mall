@@ -7,7 +7,6 @@ import { Header } from "./header"
 import { Footer } from "./footer"
 import { CartSidebar } from "@/components/cart-sidebar"
 import { useAuthStore } from "@/lib/stores"
-import { initTheme } from "@/lib/theme-config"
 
 interface MainLayoutProps {
   children: React.ReactNode
@@ -18,7 +17,6 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   useEffect(() => {
     initialize()
-    initTheme()
   }, [initialize])
 
   return (

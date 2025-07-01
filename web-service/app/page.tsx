@@ -77,7 +77,7 @@ export default function HomePage() {
       {/* 히어로 섹션 */}
       <section className="text-center space-y-6">
         <div className="space-y-4">
-          <h1 className="text-4xl md:text-6xl font-bold ">
+          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary via-blue-500 to-primary/80 bg-clip-text text-transparent">
             ShopMall
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">최고의 상품을 합리적인 가격에 만나보세요</p>
@@ -96,7 +96,7 @@ export default function HomePage() {
                 >
                   {category.icon}
                 </div>
-                <h3 className="font-medium group-hover:text-primary transition-colors">{category.name}</h3>
+                <h3 className="font-medium transition-colors">{category.name}</h3>
               </AnimatedCard>
             </Link>
           ))}
