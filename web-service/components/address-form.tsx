@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { MapPin, Search } from "lucide-react"
 
 interface Address {
-  id?: string
+  id: string
   name: string
   phone: string
   address: string
@@ -28,7 +28,7 @@ interface AddressFormProps {
 
 export function AddressForm({ address, onSubmit, onCancel }: AddressFormProps) {
   const [formData, setFormData] = useState<Address>({
-    id: address?.id,
+    id: address?.id || "",
     name: address?.name || "",
     phone: address?.phone || "",
     address: address?.address || "",

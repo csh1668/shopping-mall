@@ -122,7 +122,13 @@ export default function AddressesPage() {
 
               <AddressForm
                 address={editingAddress || undefined}
-                onSubmit={editingAddress ? handleEditAddress : handleAddAddress}
+                onSubmit={(address) => {
+                  if (editingAddress) {
+                    handleEditAddress(address)
+                  } else {
+                    handleAddAddress(address)
+                  }
+                }}
                 onCancel={handleCancelForm}
               />
             </div>

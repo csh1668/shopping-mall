@@ -8,36 +8,36 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  fullName  String
+// Supabase auth.users 테이블과 연동하는 사용자 메타데이터
+model UserMetadata {
+  id        String   @id @db.Uuid() // Supabase auth.users.id (UUID)
+  fullName  String?  @map("full_name")
   phone     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
   orders    Order[]
   addresses Address[]
   reviews   Review[]
 
-  @@map("users")
+  @@map("user_metadata")
 }
 
 model Address {
   id          String  @id @default(cuid())
-  userId      String
+  userId      String  @map("user_id") @db.Uuid()
   name        String
   phone       String
   address     String
-  detailAddress String?
-  zipCode     String
-  isDefault   Boolean @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  detailAddress String? @map("detail_address")
+  zipCode     String    @map("zip_code")
+  isDefault   Boolean   @default(false) @map("is_default")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   UserMetadata @relation(fields: [userId], references: [id], onDelete: Cascade)
   orders Order[]
 
   @@map("addresses")
@@ -45,18 +45,18 @@ model Address {
 
 model Order {
   id            String      @id @default(cuid())
-  userId        String
-  addressId     String
-  status        OrderStatus @default(PENDING)
-  totalAmount   Int
-  shippingFee   Int         @default(0)
-  paymentMethod String
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  userId        String      @map("user_id") @db.Uuid()
+  addressId     String      @map("address_id")
+  status        OrderStatus @default(PENDING) @map("status")
+  totalAmount   Int         @map("total_amount")
+  shippingFee   Int         @default(0) @map("shipping_fee")
+  paymentMethod String      @map("payment_method")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
 
   // Relations
-  user    User        @relation(fields: [userId], references: [id])
-  address Address     @relation(fields: [addressId], references: [id])
+  user    UserMetadata @relation(fields: [userId], references: [id])
+  address Address      @relation(fields: [addressId], references: [id])
   items   OrderItem[]
 
   @@map("orders")
@@ -64,7 +64,7 @@ model Order {
 
 model OrderItem {
   id       String @id @default(cuid())
-  orderId  String
+  orderId  String @map("order_id")
   name     String
   price    Int
   quantity Int
@@ -85,8 +85,8 @@ model Product {
   brand       String
   image       String
   stock       Int    @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
   reviews Review[]
@@ -96,16 +96,16 @@ model Product {
 
 model Review {
   id        String   @id @default(cuid())
-  userId    String
-  productId String
+  userId    String   @map("user_id") @db.Uuid()
+  productId String   @map("product_id")
   rating    Int
   content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  user    User    @relation(fields: [userId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+  user    UserMetadata @relation(fields: [userId], references: [id])
+  product Product      @relation(fields: [productId], references: [id])
 
   @@map("reviews")
 }

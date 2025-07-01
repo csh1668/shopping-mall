@@ -1,28 +1,20 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { supabase } from "../supabase"
+import { prisma } from "../prisma"
 import type { User, Session } from "@supabase/supabase-js"
-
-interface Profile {
-  id: string
-  email: string
-  full_name: string | null
-  phone: string | null
-  avatar_url: string | null
-  created_at: string
-  updated_at: string
-}
+import type { UserMetadata } from "@prisma/client"
 
 interface AuthStore {
   user: User | null
   session: Session | null
-  profile: Profile | null
+  userMetadata: UserMetadata | null
   loading: boolean
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: any }>
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signOut: () => Promise<void>
-  updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>
-  fetchProfile: () => Promise<void>
+  updateUserMetadata: (updates: Partial<Pick<UserMetadata, 'fullName' | 'phone'>>) => Promise<{ error: any }>
+  fetchUserMetadata: () => Promise<void>
   initialize: () => Promise<void>
 }
 
@@ -31,7 +23,7 @@ export const useAuthStore = create<AuthStore>()(
     (set, get) => ({
       user: null,
       session: null,
-      profile: null,
+      userMetadata: null,
       loading: true,
 
       signUp: async (email: string, password: string, fullName: string) => {
@@ -48,19 +40,7 @@ export const useAuthStore = create<AuthStore>()(
 
           if (error) return { error }
 
-          if (data.user) {
-            // 프로필 생성
-            const { error: profileError } = await supabase.from("profiles").insert({
-              id: data.user.id,
-              email: data.user.email!,
-              full_name: fullName,
-            })
-
-            if (profileError) {
-              console.error("Profile creation error:", profileError)
-            }
-          }
-
+          // UserMetadata는 트리거에 의해 자동으로 생성됩니다
           return { error: null }
         } catch (error) {
           return { error }
@@ -78,7 +58,7 @@ export const useAuthStore = create<AuthStore>()(
 
           if (data.user && data.session) {
             set({ user: data.user, session: data.session })
-            await get().fetchProfile()
+            await get().fetchUserMetadata()
           }
 
           return { error: null }
@@ -90,50 +70,45 @@ export const useAuthStore = create<AuthStore>()(
       signOut: async () => {
         try {
           await supabase.auth.signOut()
-          set({ user: null, session: null, profile: null })
+          set({ user: null, session: null, userMetadata: null })
         } catch (error) {
           console.error("Sign out error:", error)
         }
       },
 
-      updateProfile: async (updates: Partial<Profile>) => {
+      updateUserMetadata: async (updates: Partial<Pick<UserMetadata, 'fullName' | 'phone'>>) => {
         try {
           const user = get().user
           if (!user) return { error: "No user found" }
 
-          const { error } = await supabase
-            .from("profiles")
-            .update({ ...updates, updated_at: new Date().toISOString() })
-            .eq("id", user.id)
+          const updatedMetadata = await prisma.userMetadata.update({
+            where: { id: user.id },
+            data: {
+              ...updates,
+              updatedAt: new Date(),
+            },
+          })
 
-          if (error) return { error }
-
-          // 로컬 상태 업데이트
-          set((state) => ({
-            profile: state.profile ? { ...state.profile, ...updates } : null,
-          }))
-
+          set({ userMetadata: updatedMetadata })
           return { error: null }
         } catch (error) {
+          console.error("Update user metadata error:", error)
           return { error }
         }
       },
 
-      fetchProfile: async () => {
+      fetchUserMetadata: async () => {
         try {
           const user = get().user
           if (!user) return
 
-          const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+          const userMetadata = await prisma.userMetadata.findUnique({
+            where: { id: user.id },
+          })
 
-          if (error) {
-            console.error("Fetch profile error:", error)
-            return
-          }
-
-          set({ profile: data })
+          set({ userMetadata })
         } catch (error) {
-          console.error("Fetch profile error:", error)
+          console.error("Fetch user metadata error:", error)
         }
       },
 
@@ -147,16 +122,16 @@ export const useAuthStore = create<AuthStore>()(
 
           if (session) {
             set({ user: session.user, session })
-            await get().fetchProfile()
+            await get().fetchUserMetadata()
           }
 
           // 인증 상태 변경 리스너
           supabase.auth.onAuthStateChange(async (event, session) => {
             if (session) {
               set({ user: session.user, session })
-              await get().fetchProfile()
+              await get().fetchUserMetadata()
             } else {
-              set({ user: null, session: null, profile: null })
+              set({ user: null, session: null, userMetadata: null })
             }
           })
         } catch (error) {
@@ -171,7 +146,7 @@ export const useAuthStore = create<AuthStore>()(
       partialize: (state) => ({
         user: state.user,
         session: state.session,
-        profile: state.profile,
+        userMetadata: state.userMetadata,
       }),
     },
   ),
