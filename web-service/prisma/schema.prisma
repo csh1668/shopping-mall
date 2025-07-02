@@ -8,7 +8,7 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// Supabase auth.users 테이블과 연동하는 사용자 메타데이터
+// Supabase auth.users 테이블과 연동되는 사용자 메타데이터
 model UserMetadata {
   id        String   @id @db.Uuid() // Supabase auth.users.id (UUID)
   fullName  String?  @map("full_name")
@@ -20,6 +20,8 @@ model UserMetadata {
   orders    Order[]
   addresses Address[]
   reviews   Review[]
+  cartItems CartItem[]
+  wishlistItems WishlistItem[]
 
   @@map("user_metadata")
 }
@@ -33,6 +35,7 @@ model Address {
   detailAddress String? @map("detail_address")
   zipCode     String    @map("zip_code")
   isDefault   Boolean   @default(false) @map("is_default")
+
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -43,14 +46,137 @@ model Address {
   @@map("addresses")
 }
 
+model Category {
+  id          String @id @default(cuid())
+  name        String @unique
+  slug        String @unique
+  description String?
+  image       String?
+  parentId    String? @map("parent_id") // 계층 구조 지원을 위함
+  isActive    Boolean @default(true) @map("is_active")
+  sortOrder   Int     @default(0) @map("sort_order") // 각 카테고리끼리의 정렬 순서
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  parent   Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
+
+  @@index([slug])
+  @@map("categories")
+}
+
+model Product {
+  id          String @id @default(cuid())
+  name        String
+  slug        String @unique
+  description String
+  shortDescription String? @map("short_description")
+  price       Int
+  originalPrice Int? @map("original_price")
+  categoryId  String @map("category_id")
+  brand       String
+  sku         String? @unique // 상품 코드
+  previewImage String @map("preview_image") // 미리보기 이미지
+  images      String[] // 상품 이미지들
+  stock       Int    @default(0)
+  minStock    Int    @default(0) @map("min_stock") // 재고 부족 알림 기준
+  weight      Float?
+  dimensions  String?
+  isActive    Boolean @default(true) @map("is_active")
+  tags        String[]
+  metaTitle   String? @map("meta_title")
+  metaDescription String? @map("meta_description")
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  category Category @relation(fields: [categoryId], references: [id])
+  reviews Review[]
+  orderItems OrderItem[]
+  cartItems CartItem[]
+  wishlistItems WishlistItem[]
+  productVariants ProductVariant[]
+
+  @@index([slug])
+  @@map("products")
+}
+
+model ProductVariant {
+  id        String @id @default(cuid())
+  productId String @map("product_id")
+  type      VariantType
+  value     String
+  price     Int?
+  stock     Int @default(0)
+  sku       String?
+  image     String?
+  isActive  Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, type, value])
+  @@map("product_variants")
+}
+
+// 장바구니 테이블 추가
+model CartItem {
+  id        String @id @default(cuid())
+  userId    String @map("user_id") @db.Uuid
+  productId String @map("product_id")
+  quantity  Int @default(1)
+  selectedOptions Json? @map("selected_options") // 선택된 옵션들
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user    UserMetadata @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId, selectedOptions])
+  @@map("cart_items")
+}
+
+// 위시리스트 테이블 추가
+model WishlistItem {
+  id        String @id @default(cuid())
+  userId    String @map("user_id") @db.Uuid
+  productId String @map("product_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user    UserMetadata @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("wishlist_items")
+}
+
 model Order {
   id            String      @id @default(cuid())
-  userId        String      @map("user_id") @db.Uuid()
+  orderNumber   String      @unique @map("order_number")
+  userId        String      @map("user_id") @db.Uuid
   addressId     String      @map("address_id")
-  status        OrderStatus @default(PENDING) @map("status")
+  status        OrderStatus @default(PENDING)
   totalAmount   Int         @map("total_amount")
-  shippingFee   Int         @default(0) @map("shipping_fee")
-  paymentMethod String      @map("payment_method")
+  discountAmount Int        @default(0) @map("discount_amount")
+  shippingFee   Int         @default(0) @map("shipping_fee") // 배송비
+
+  // 결제는 토스페이먼츠 사용
+  // paymentMethod String      @map("payment_method")
+  // paymentStatus PaymentStatus @default(PENDING) @map("payment_status") // 결제 상태
+
+  trackingNumber String?    @map("tracking_number") // 송장번호
+  notes         String? // 주문 메모
+
   createdAt     DateTime    @default(now()) @map("created_at")
   updatedAt     DateTime    @updatedAt @map("updated_at")
 
@@ -58,48 +184,52 @@ model Order {
   user    UserMetadata @relation(fields: [userId], references: [id])
   address Address      @relation(fields: [addressId], references: [id])
   items   OrderItem[]
+  statusHistory OrderStatusHistory[] // 주문 상태 이력
 
   @@map("orders")
+}
+
+model OrderStatusHistory {
+  id        String @id @default(cuid())
+  orderId   String @map("order_id")
+  status    OrderStatus
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_status_history")
 }
 
 model OrderItem {
   id       String @id @default(cuid())
   orderId  String @map("order_id")
+  productId String @map("product_id")
   name     String
   price    Int
+  originalPrice Int? @map("original_price")
   quantity Int
   image    String?
+  selectedOptions Json? @map("selected_options")
 
   // Relations
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order   Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
 
   @@map("order_items")
 }
 
-model Product {
-  id          String @id @default(cuid())
-  name        String
-  description String
-  price       Int
-  category    String
-  brand       String
-  image       String
-  stock       Int    @default(0)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  reviews Review[]
-
-  @@map("products")
-}
-
 model Review {
   id        String   @id @default(cuid())
-  userId    String   @map("user_id") @db.Uuid()
+  userId    String   @map("user_id") @db.Uuid
   productId String   @map("product_id")
-  rating    Int
+  orderId   String?  @map("order_id")
+  rating    Int      @db.SmallInt // 1-5
+  title     String?
   content   String
+  images    String[]
+  helpfulCount Int   @default(0) @map("helpful_count")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -110,10 +240,53 @@ model Review {
   @@map("reviews")
 }
 
+model Coupon {
+  id          String @id @default(cuid())
+  code        String @unique
+  name        String
+  description String?
+  type        CouponType // (고정 할인, 퍼센트 할인)
+  value       Int // 할인값 (금액 또는 퍼센트)
+  minAmount   Int? @map("min_amount") // 최소 주문 금액
+  maxDiscount Int? @map("max_discount") // 최대 할인 금액
+  usageLimit  Int? @map("usage_limit") // 사용 제한 횟수
+  usedCount   Int @default(0) @map("used_count") // 사용된 횟수
+  isActive    Boolean @default(true) @map("is_active")
+  validFrom   DateTime @map("valid_from")
+  validUntil  DateTime @map("valid_until")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("coupons")
+}
+
+// Enums
+enum VariantType {
+  COLOR    // 색상
+  SIZE     // 사이즈
+  MATERIAL // 소재
+  OTHER    // 기타
+}
+
 enum OrderStatus {
-  PENDING
-  CONFIRMED
-  SHIPPED
-  DELIVERED
-  CANCELLED
+  PENDING     // 주문 대기
+  CONFIRMED   // 주문 확인
+  PROCESSING  // 주문 처리
+  SHIPPED     // 배송 중
+  DELIVERED   // 배송 완료
+  CANCELLED   // 주문 취소
+  REFUNDED    // 환불 완료
+}
+
+enum PaymentStatus {
+  PENDING     // 결제 대기
+  PAID        // 결제 완료
+  FAILED      // 결제 실패
+  REFUNDED    // 환불 완료
+  PARTIALLY_REFUNDED // 부분 환불 완료
+}
+
+enum CouponType {
+  FIXED_AMOUNT // 고정 금액
+  PERCENTAGE   // 퍼센트
 }
