@@ -11,10 +11,13 @@ datasource db {
 // Supabase auth.users 테이블과 연동되는 사용자 메타데이터
 model UserMetadata {
   id        String   @id @db.Uuid() // Supabase auth.users.id (UUID)
-  fullName  String?  @map("full_name")
-  phone     String?
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+
+  email     String   @unique
+  fullName  String?  @map("full_name")
+  phone     String?
+  role      UserRole[] @default([CUSTOMER])
 
   // Relations
   orders    Order[]
@@ -23,6 +26,7 @@ model UserMetadata {
   cartItems CartItem[]
   wishlistItems WishlistItem[]
 
+  @@index([email])
   @@map("user_metadata")
 }
 
@@ -30,7 +34,6 @@ model Address {
   id          String  @id @default(cuid())
   userId      String  @map("user_id") @db.Uuid()
   name        String
-  phone       String
   address     String
   detailAddress String? @map("detail_address")
   zipCode     String    @map("zip_code")
@@ -261,6 +264,13 @@ model Coupon {
 }
 
 // Enums
+enum UserRole {
+  CUSTOMER
+  SELLER
+  ADMIN
+  SUPER_ADMIN
+}
+
 enum VariantType {
   COLOR    // 색상
   SIZE     // 사이즈

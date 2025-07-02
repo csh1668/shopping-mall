@@ -12,11 +12,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { FormField } from "@/components/ui/form-field"
 import { SocialButton } from "@/components/ui/social-button"
 import { LoadingSpinner } from "@/components/ui/loading-spinner"
-import { useAuthStore } from "@/lib/stores"
 
 export default function AuthPage() {
   const router = useRouter()
-  const { signIn, signUp } = useAuthStore()
   const [mode, setMode] = useState<"login" | "signup">("login")
   const [isLoading, setIsLoading] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
@@ -80,10 +78,10 @@ export default function AuthPage() {
 
     try {
       if (mode === "login") {
-        await signIn(formData.email, formData.password)
+        // TODO: signIn
         router.push("/")
       } else {
-        await signUp(formData.email, formData.password, formData.fullName)
+        // TODO: signUp
         setShowSuccess(true)
       }
     } catch (error) {

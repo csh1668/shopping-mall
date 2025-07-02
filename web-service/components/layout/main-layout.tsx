@@ -2,22 +2,15 @@
 
 import type React from "react"
 
-import { useEffect } from "react"
 import { Header } from "./header"
 import { Footer } from "./footer"
 import { CartSidebar } from "@/components/cart-sidebar"
-import { useAuthStore } from "@/lib/stores"
 
 interface MainLayoutProps {
   children: React.ReactNode
 }
 
 export function MainLayout({ children }: MainLayoutProps) {
-  const { initialize } = useAuthStore()
-
-  useEffect(() => {
-    initialize()
-  }, [initialize])
 
   return (
     <div className="min-h-screen flex flex-col">

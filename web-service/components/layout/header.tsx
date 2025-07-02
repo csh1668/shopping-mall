@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { useCartStore, useAuthStore } from "@/lib/stores"
 import { UserMenu } from "@/components/user-menu"
 import { SearchBar } from "@/components/search"
 
@@ -27,12 +26,8 @@ const categories = [
 
 export function Header() {
   const router = useRouter()
-  const { items, toggleCart, getTotalItems } = useCartStore()
-  const { user } = useAuthStore()
   const [searchQuery, setSearchQuery] = useState("")
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-
-  const totalItems = getTotalItems()
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -76,7 +71,7 @@ export function Header() {
             <ThemeToggle />
 
             {/* 장바구니 */}
-            <Button variant="ghost" size="icon" className="relative hover-scale" onClick={toggleCart}>
+            {/* <Button variant="ghost" size="icon" className="relative hover-scale" onClick={toggleCart}>
               <ShoppingCart className="h-5 w-5" />
               {totalItems > 0 && (
                 <Badge
@@ -86,10 +81,10 @@ export function Header() {
                   {totalItems > 99 ? "99+" : totalItems}
                 </Badge>
               )}
-            </Button>
+            </Button> */}
 
             {/* 사용자 메뉴 */}
-            {user ? (
+            {/* {user ? (
               <UserMenu />
             ) : (
               <Link href="/auth">
@@ -97,7 +92,7 @@ export function Header() {
                   <User className="h-5 w-5" />
                 </Button>
               </Link>
-            )}
+            )} */}
 
             {/* 모바일 메뉴 */}
             <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>

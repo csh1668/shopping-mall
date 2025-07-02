@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AnimatedCard } from "@/components/ui/animated-card"
-import { useCartStore } from "@/lib/stores"
+import { trpc } from "@/server/client"
 
 // 임시 데이터
 const featuredProducts = [
@@ -169,7 +169,6 @@ export default function HomePage() {
 
 function ProductCard({ product, index }: { product: any; index: number }) {
   const [isWishlisted, setIsWishlisted] = useState(false)
-  const { addItem } = useCartStore()
 
   return (
     <Link href={`/product/${product.id}`}>
@@ -216,15 +215,7 @@ function ProductCard({ product, index }: { product: any; index: number }) {
               className="w-full opacity-0 group-hover:opacity-100 transition-opacity"
               onClick={(e) => {
                 e.preventDefault()
-                addItem({
-                  id: product.id,
-                  name: product.name,
-                  price: product.price,
-                  originalPrice: product.originalPrice,
-                  image: product.image,
-                  brand: "ShopMall",
-                  inStock: product.inStock,
-                })
+                // TODO: addItem
               }}
             >
               <ShoppingCart className="h-4 w-4 mr-2" />
