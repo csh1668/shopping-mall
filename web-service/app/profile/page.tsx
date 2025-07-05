@@ -14,32 +14,32 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AuthGuard } from "@/components/auth-guard"
-import { useAuthStore } from "@/lib/stores/auth-store"
+import { useAuthStore } from "@/stores/auth-store"
 
 export default function ProfilePage() {
-  const { user, profile, updateProfile } = useAuthStore()
+  const { user, metadata, updateUserMetadata } = useAuthStore()
   const [formData, setFormData] = useState({
-    full_name: "",
+    fullName: "",
     phone: "",
   })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
 
   useEffect(() => {
-    if (profile) {
+    if (metadata) {
       setFormData({
-        full_name: profile.full_name || "",
-        phone: profile.phone || "",
+        fullName: metadata.fullName || "",
+        phone: metadata.phone || "",
       })
     }
-  }, [profile])
+  }, [metadata])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setMessage("")
 
-    const { error } = await updateProfile(formData)
+    const { error } = await updateUserMetadata(formData)
 
     if (error) {
       setMessage("프로필 업데이트에 실패했습니다.")
@@ -57,7 +57,7 @@ export default function ProfilePage() {
     }))
   }
 
-  if (!user || !profile) {
+  if (!user || !metadata) {
     return null
   }
 
@@ -97,9 +97,9 @@ export default function ProfilePage() {
                     {/* Avatar */}
                     <div className="flex items-center gap-4">
                       <Avatar className="h-20 w-20">
-                        <AvatarImage src={profile.avatar_url || ""} alt={profile.full_name || ""} />
+                        {/* <AvatarImage src={metadata.avatar_url || ""} alt={metadata.full_name || ""} /> */}
                         <AvatarFallback className="text-lg">
-                          {profile.full_name?.charAt(0) || profile.email.charAt(0).toUpperCase()}
+                          {metadata.fullName?.charAt(0) || metadata.email.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
@@ -121,7 +121,7 @@ export default function ProfilePage() {
                           <Input
                             id="full_name"
                             name="full_name"
-                            value={formData.full_name}
+                            value={formData.fullName}
                             onChange={handleChange}
                             className="pl-10"
                             placeholder="이름을 입력하세요"
@@ -133,7 +133,7 @@ export default function ProfilePage() {
                         <Label htmlFor="email">이메일</Label>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                          <Input id="email" value={profile.email} className="pl-10" disabled />
+                          <Input id="email" value={metadata.email} className="pl-10" disabled />
                         </div>
                         <p className="text-xs text-muted-foreground">이메일은 변경할 수 없습니다</p>
                       </div>
@@ -153,10 +153,10 @@ export default function ProfilePage() {
                         </div>
                       </div>
 
-                      <div className="space-y-2">
+                      {/* <div className="space-y-2">
                         <Label>가입일</Label>
-                        <Input value={new Date(profile.created_at).toLocaleDateString("ko-KR")} disabled />
-                      </div>
+                        <Input value={new Date(metadata.createdAt).toLocaleDateString("ko-KR")} disabled />
+                      </div> */}
                     </div>
 
                     <Button type="submit" disabled={loading}>

@@ -17,7 +17,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Separator } from "@/components/ui/separator"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { useCartStore } from "@/lib/stores"
+// import { useCartStore } from "@/lib/stores"
 
 // 카테고리 매핑
 const categoryNames: Record<string, string> = {
@@ -549,15 +549,15 @@ function ProductCard({ product, viewMode }: { product: any; viewMode: "grid" | "
                   disabled={!product.inStock}
                   onClick={(e) => {
                     e.preventDefault()
-                    useCartStore.getState().addItem({
-                      id: product.id,
-                      name: product.name,
-                      price: product.price,
-                      originalPrice: product.originalPrice,
-                      image: product.image,
-                      brand: product.brand,
-                      inStock: product.inStock,
-                    })
+                    // useCartStore.getState().addItem({
+                    //   id: product.id,
+                    //   name: product.name,
+                    //   price: product.price,
+                    //   originalPrice: product.originalPrice,
+                    //   image: product.image,
+                    //   brand: product.brand,
+                    //   inStock: product.inStock,
+                    // })
                   }}
                 >
                   장바구니

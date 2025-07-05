@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { useCartStore } from "@/lib/stores/cart-store"
+// import { useCartStore } from "@/lib/stores/cart-store"
 
 // 추천 상품 데이터
 const recommendedProducts = [
@@ -45,7 +45,34 @@ const recommendedProducts = [
 ]
 
 export default function CartPage() {
-  const { items, updateQuantity, removeItem, clearCart, getTotalPrice, getOriginalTotalPrice, addItem } = useCartStore()
+  // const { items, updateQuantity, removeItem, clearCart, getTotalPrice, getOriginalTotalPrice, addItem } = useCartStore()
+  // dummy values for testing
+  const items = [
+    {
+      id: 1,
+      name: "상품 1",
+      price: 10000,
+      quantity: 1,
+    },
+  ];
+  const updateQuantity = (id: number, quantity: number) => {
+    console.log(`updateQuantity: ${id}, ${quantity}`)
+  }
+  const removeItem = (id: number) => {
+    console.log(`removeItem: ${id}`)
+  }
+  const clearCart = () => {
+    console.log(`clearCart`)
+  }
+  const getTotalPrice = () => {
+    return 0
+  }
+  const getOriginalTotalPrice = () => {
+    return 0
+  }
+  const addItem = (item: any) => {
+    console.log(`addItem: ${item}`)
+  } 
 
   const [selectedItems, setSelectedItems] = useState<number[]>(items.map((item) => item.id))
   const [couponCode, setCouponCode] = useState("")
@@ -162,7 +189,7 @@ export default function CartPage() {
             {/* Cart Items List */}
             <div className="space-y-4">
               {items.map((item) => (
-                <Card key={`${item.id}-${item.selectedColor}-${item.selectedSize}`}>
+                <Card key={`${item.id}`}>
                   <CardContent className="p-6">
                     <div className="flex gap-4">
                       <Checkbox
@@ -172,7 +199,7 @@ export default function CartPage() {
 
                       <div className="relative w-24 h-24 flex-shrink-0">
                         <Image
-                          src={item.image || "/placeholder.svg"}
+                          src={"/placeholder.svg"}
                           alt={item.name}
                           fill
                           className="object-cover rounded-lg"
@@ -183,14 +210,7 @@ export default function CartPage() {
                         <div className="flex items-start justify-between">
                           <div>
                             <h3 className="font-medium">{item.name}</h3>
-                            <p className="text-sm text-muted-foreground">{item.brand}</p>
-
-                            {(item.selectedColor || item.selectedSize) && (
-                              <div className="flex gap-2 mt-2">
-                                {item.selectedColor && <Badge variant="outline">색상: {item.selectedColor}</Badge>}
-                                {item.selectedSize && <Badge variant="outline">사이즈: {item.selectedSize}</Badge>}
-                              </div>
-                            )}
+                            <p className="text-sm text-muted-foreground">브랜드</p>
                           </div>
 
                           <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)}>
@@ -202,11 +222,6 @@ export default function CartPage() {
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <span className="text-lg font-bold">{item.price.toLocaleString()}원</span>
-                              {item.originalPrice && item.originalPrice > item.price && (
-                                <span className="text-sm text-muted-foreground line-through">
-                                  {item.originalPrice.toLocaleString()}원
-                                </span>
-                              )}
                             </div>
                             <p className="text-sm font-medium">총 {(item.price * item.quantity).toLocaleString()}원</p>
                           </div>

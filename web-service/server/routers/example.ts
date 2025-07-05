@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { router, publicProcedure, protectedProcedure, schemas } from '@/server'
+import { router, publicProcedure, protectedProcedure } from '@/server'
+import { commonSchemas } from '@/server/schemas'
 
 export const exampleRouter = router({
   // 누구나 접근 가능한 공개 API
@@ -50,7 +51,7 @@ export const exampleRouter = router({
 
   // 페이지네이션 예시
   paginated: publicProcedure
-    .input(schemas.pagination.extend({
+    .input(commonSchemas.pagination.extend({
       category: z.string().optional(),
     }))
     .query(async ({ input }) => {
@@ -76,7 +77,7 @@ export const exampleRouter = router({
 
   // UUID 검증 예시
   getById: publicProcedure
-    .input(schemas.uuid)
+    .input(commonSchemas.uuid)
     .query(async ({ input }) => {
       return {
         id: input.id,

@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Checkbox } from "@/components/ui/checkbox"
 import { AuthGuard } from "@/components/auth-guard"
-import { useAuthStore } from "@/lib/stores/auth-store"
+import { useAuthStore } from "@/stores/auth-store"
 
 export default function SignUpPage() {
   const router = useRouter()

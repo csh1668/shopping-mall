@@ -21,9 +21,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { OrderStatusBadge } from "@/components/order-status-badge"
-import { useOrderStore } from "@/lib/stores/order-store"
-import { useCartStore } from "@/lib/stores/cart-store"
-import type { Order } from "@/lib/stores/order-store"
+// import { useOrderStore } from "@/lib/stores/order-store"
+// import { useCartStore } from "@/lib/stores/cart-store"
+// import type { Order } from "@/lib/stores/order-store"
 
 // 배송 추적 단계
 const trackingSteps = [

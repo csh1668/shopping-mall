@@ -20,7 +20,7 @@ import { Separator } from "@/components/ui/separator"
 import { Label } from "@/components/ui/label"
 
 // Import the cart store at the top
-import { useCartStore } from "@/lib/stores/cart-store"
+// import { useCartStore } from "@/lib/stores/cart-store"
 import { CartSidebar } from "@/components/cart-sidebar"
 
 // 임시 상품 데이터 (카테고리 페이지와 동일)
@@ -518,15 +518,15 @@ function ProductCard({ product, viewMode }: { product: any; viewMode: "grid" | "
                   disabled={!product.inStock}
                   onClick={(e) => {
                     e.preventDefault()
-                    useCartStore.getState().addItem({
-                      id: product.id,
-                      name: product.name,
-                      price: product.price,
-                      originalPrice: product.originalPrice,
-                      image: product.image,
-                      brand: product.brand,
-                      inStock: product.inStock,
-                    })
+                    // useCartStore.getState().addItem({
+                    //   id: product.id,
+                    //   name: product.name,
+                    //   price: product.price,
+                    //   originalPrice: product.originalPrice,
+                    //   image: product.image,
+                    //   brand: product.brand,
+                    //   inStock: product.inStock,
+                    // })
                   }}
                 >
                   장바구니

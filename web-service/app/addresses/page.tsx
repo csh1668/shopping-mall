@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { AuthGuard } from "@/components/auth-guard"
 import { AddressForm } from "@/components/address-form"
-import { useAuthStore } from "@/lib/stores/auth-store"
+import { useAuthStore } from "@/stores/auth-store"
 
 interface Address {
   id: string

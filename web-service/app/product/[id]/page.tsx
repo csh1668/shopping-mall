@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
 
-import { useCartStore } from "@/lib/stores"
+// import { useCartStore } from "@/lib/stores"
 import { CartSidebar } from "@/components/cart-sidebar"
 
 // 임시 상품 데이터
@@ -282,18 +282,18 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
               size="lg"
               className="w-full"
               onClick={() => {
-                useCartStore.getState().addItem({
-                  id: productData.id,
-                  name: productData.name,
-                  price: productData.price,
-                  originalPrice: productData.originalPrice,
-                  image: productData.images[0],
-                  brand: "ShopMall",
-                  selectedColor: selectedColor.name,
-                  selectedSize: selectedSize,
-                  inStock: productData.stock > 0,
-                })
-                useCartStore.getState().toggleCart()
+                // useCartStore.getState().addItem({
+                //   id: productData.id,
+                //   name: productData.name,
+                //   price: productData.price,
+                //   originalPrice: productData.originalPrice,
+                //   image: productData.images[0],
+                //   brand: "ShopMall",
+                //   selectedColor: selectedColor.name,
+                //   selectedSize: selectedSize,
+                //   inStock: productData.stock > 0,
+                // })
+                // useCartStore.getState().toggleCart()
               }}
             >
               <ShoppingCart className="mr-2 h-5 w-5" />

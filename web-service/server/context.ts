@@ -1,40 +1,24 @@
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
-import { serverEnv } from '../server-env'
+import { getSupabaseServerClient } from '@/lib/supabase-server'
 
 export async function createTRPCContext() {
-  const cookieStore = await cookies()
-  
-  const supabase = createServerClient(
-    serverEnv.NEXT_PUBLIC_SUPABASE_URL,
-    serverEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
-          }
-        },
-      },
-    }
-  )
+  const supabase = await getSupabaseServerClient();
 
   // 현재 사용자 정보 가져오기
-  const { data: { user }, error } = await supabase.auth.getUser()
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser();
 
-  return {
-    supabase,
-    user,
-    error,
+    return {
+      supabase,
+      user,
+      isAuthenticated: !!user,
+    }
+  } catch (error) {
+    console.error('TRPC 컨텍스트 생성 중 오류 발생:', error);
+    return {
+      supabase,
+      user: null,
+      isAuthenticated: false,
+    }
   }
 }
 

@@ -10,16 +10,16 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { useCartStore } from "@/lib/stores/cart-store"
-import { useOrderStore } from "@/lib/stores/order-store"
+// import { useCartStore } from "@/lib/stores/cart-store"
+// import { useOrderStore } from "@/lib/stores/order-store"
 import { ShippingForm } from "@/components/shipping-form"
 import { PaymentForm } from "@/components/payment-form"
-import type { ShippingInfo, PaymentInfo } from "@/lib/stores/order-store"
+// import type { ShippingInfo, PaymentInfo } from "@/lib/stores/order-store"
 
 export default function CheckoutPage() {
   const router = useRouter()
-  const { items, getTotalPrice, getOriginalTotalPrice, clearCart } = useCartStore()
-  const { setCurrentOrder, addOrder } = useOrderStore()
+  // const { items, getTotalPrice, getOriginalTotalPrice, clearCart } = useCartStore()
+  // const { setCurrentOrder, addOrder } = useOrderStore()
 
   const [step, setStep] = useState(1) // 1: 배송정보, 2: 결제정보, 3: 주문확인
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo | null>(null)

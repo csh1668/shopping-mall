@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useAuthStore } from "@/lib/stores/auth-store"
+import { useAuthStore } from "@/stores/auth-store"
 import { Loader2 } from "lucide-react"
 
 interface AuthGuardProps {
@@ -14,12 +14,12 @@ interface AuthGuardProps {
 }
 
 export function AuthGuard({ children, requireAuth = true, redirectTo = "/auth/login" }: AuthGuardProps) {
-  const { user, loading, initialize } = useAuthStore()
+  const { user, loading, init } = useAuthStore()
   const router = useRouter()
 
   useEffect(() => {
-    initialize()
-  }, [initialize])
+    init()
+  }, [init])
 
   useEffect(() => {
     if (!loading) {

@@ -8,16 +8,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { AuthGuard } from "@/components/auth-guard"
-import { useAuthStore } from "@/lib/stores/auth-store"
+import { useAuthStore } from "@/stores/auth-store"
 
 export default function MyPage() {
-  const { user, profile, signOut } = useAuthStore()
+  const { user, metadata, signOut } = useAuthStore()
 
   const handleSignOut = async () => {
     await signOut()
   }
 
-  if (!user || !profile) {
+  if (!user || !metadata) {
     return null
   }
 
@@ -85,13 +85,13 @@ export default function MyPage() {
                 <CardContent className="p-6">
                   <div className="text-center">
                     <Avatar className="h-20 w-20 mx-auto mb-4">
-                      <AvatarImage src={profile.avatar_url || ""} alt={profile.full_name || ""} />
+                      {/* <AvatarImage src={metadata.avatar_url || ""} alt={metadata.full_name || ""} /> */}
                       <AvatarFallback className="text-lg">
-                        {profile.full_name?.charAt(0) || profile.email.charAt(0).toUpperCase()}
+                        {metadata.fullName?.charAt(0) || metadata.email.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
-                    <h2 className="text-xl font-bold mb-1">{profile.full_name || "사용자"}</h2>
-                    <p className="text-muted-foreground mb-4">{profile.email}</p>
+                    <h2 className="text-xl font-bold mb-1">{metadata.fullName || "사용자"}</h2>
+                    <p className="text-muted-foreground mb-4">{metadata.email}</p>
                     <Badge variant="secondary" className="mb-4">
                       일반 회원
                     </Badge>
