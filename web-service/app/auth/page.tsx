@@ -20,7 +20,7 @@ import { SocialButton } from "@/components/ui/social-button";
 import { useAuthStore } from "@/stores/auth-store";
 import { createLogger } from "@/utils/logger";
 
-const logger = createLogger("AuthPage");
+const _logger = createLogger("AuthPage");
 
 export default function AuthPage() {
 	const router = useRouter();

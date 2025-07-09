@@ -8,7 +8,6 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuthStore } from "@/stores/auth-store";
-import LucideIcon from "../lucide-icon";
 import { UserMenu } from "../user-menu";
 
 const categories = [

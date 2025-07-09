@@ -19,11 +19,12 @@ import { Separator } from "@/components/ui/separator";
 // import { useOrderStore } from "@/lib/stores/order-store"
 // import type { Order } from "@/lib/stores/order-store"
 
-export default function OrderCompletePage({
+export default async function OrderCompletePage({
 	params,
 }: {
-	params: { orderId: string };
+	params: Promise<{ orderId: string }>;
 }) {
+	const { orderId } = await params;
 	// const { getOrderById } = useOrderStore()
 	const getOrderById = (orderId: string) => {
 		console.log(`getOrderById: ${orderId}`);
@@ -33,10 +34,10 @@ export default function OrderCompletePage({
 	const [order, setOrder] = useState<any | null>(null);
 
 	useEffect(() => {
-		const foundOrder = getOrderById(params.orderId);
+		const foundOrder = getOrderById(orderId);
 		setOrder(foundOrder || null);
 		// biome-ignore lint/correctness/useExhaustiveDependencies: 임시
-	}, [params.orderId, getOrderById]);
+	}, [orderId, getOrderById]);
 
 	if (!order) {
 		return (

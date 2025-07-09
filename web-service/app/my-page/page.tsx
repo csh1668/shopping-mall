@@ -18,10 +18,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { trpc } from "@/server/client";
 import { useAuthStore } from "@/stores/auth-store";
 
 export default function MyPage() {
-	const { user, metadata, signOut } = useAuthStore();
+	const { user, signOut } = useAuthStore();
+	const { data: metadata } = trpc.user.getUserMetadata.useQuery(undefined, {
+		enabled: !!user,
+	});
 
 	const handleSignOut = async () => {
 		await signOut();

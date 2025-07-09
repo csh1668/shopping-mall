@@ -19,21 +19,6 @@ export const sTrpc = createTRPCClient<AppRouter>({
 			url: "/api/trpc",
 			async headers() {
 				try {
-					const {
-						data: { user },
-						error,
-					} = await supabase.auth.getUser();
-
-					if (error) {
-						logger.warn("sTrpc: 사용자 인증 실패:", error.message);
-						return {};
-					}
-
-					if (!user) {
-						logger.info("sTrpc: 인증되지 않은 사용자");
-						return {};
-					}
-
 					// 현재 세션에서 access_token 가져오기
 					const {
 						data: { session },

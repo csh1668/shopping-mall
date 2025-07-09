@@ -2,12 +2,14 @@ pre-commit:
   commands:
     biome:
       root: "web-service/"
-      run: npm run lint
-      stage_fixed: true
-      
+      run: |
+        npm run lint
+        npx tsc --noEmit
 
 pre-push:
   commands:
     biome:
       root: "web-service/"
-      run: npm run lint
+      run: |
+        npm run lint
+        npx tsc --noEmit
