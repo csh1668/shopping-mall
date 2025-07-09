@@ -203,11 +203,12 @@ const sortOptions = [
 	{ value: "newest", label: "최신순" },
 ];
 
-export default function CategoryPage({
+export default async function CategoryPage({
 	params,
 }: {
-	params: { category: string };
+	params: Promise<{ category: string }>;
 }) {
+	const { category } = await params;
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 	const [sortBy, setSortBy] = useState("popular");
 	const [priceRange, setPriceRange] = useState([0, 500000]);
@@ -216,14 +217,13 @@ export default function CategoryPage({
 	const [showInStockOnly, setShowInStockOnly] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 
-	const categoryName = categoryNames[params.category] || "전체";
+	const categoryName = categoryNames[category] || "전체";
 
 	// 필터링된 상품들
 	const filteredProducts = useMemo(() => {
 		const filtered = allProducts.filter((product) => {
 			// 카테고리 필터
-			if (params.category !== "all" && product.category !== params.category)
-				return false;
+			if (category !== "all" && product.category !== category) return false;
 
 			// 검색 필터
 			if (
@@ -263,7 +263,7 @@ export default function CategoryPage({
 
 		return filtered;
 	}, [
-		params.category,
+		category,
 		searchQuery,
 		priceRange,
 		selectedBrands,

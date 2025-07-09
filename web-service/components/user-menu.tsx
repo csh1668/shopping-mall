@@ -12,20 +12,28 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import { trpc } from "@/server/client";
 import { useAuthStore } from "@/stores/auth-store";
 
 export function UserMenu() {
-	const { user, metadata, signOut } = useAuthStore();
+	const { user, signOut } = useAuthStore();
+
+	// tRPC Hook 사용 - 자동 캐싱, 리팩토링, 로딩 상태 관리
+	const { data: metadata, isLoading } = trpc.user.getUserMetadata.useQuery(
+		undefined,
+		{ enabled: !!user }, // 로그인된 경우만 쿼리 실행
+	);
 
 	if (!user) {
 		return (
 			<div className="flex items-center gap-2">
-				<Link href="/auth/login">
+				<Link href="/auth">
 					<Button variant="ghost" size="sm">
 						로그인
 					</Button>
 				</Link>
-				<Link href="/auth/signup">
+				<Link href="/auth">
 					<Button size="sm">회원가입</Button>
 				</Link>
 			</div>
@@ -42,12 +50,16 @@ export function UserMenu() {
 				<Button variant="ghost" className="relative h-8 w-8 rounded-full">
 					<Avatar className="h-8 w-8">
 						<AvatarImage
-							src={metadata?.avatar_url || ""}
-							alt={metadata?.full_name || ""}
+							src="/placeholder.svg"
+							alt={metadata?.fullName || ""}
 						/>
 						<AvatarFallback>
-							{metadata?.full_name?.charAt(0) ||
-								user.email?.charAt(0).toUpperCase()}
+							{isLoading ? (
+								<Skeleton className="h-8 w-8 rounded-full" />
+							) : (
+								metadata?.fullName?.charAt(0) ||
+								user.email?.charAt(0).toUpperCase()
+							)}
 						</AvatarFallback>
 					</Avatar>
 				</Button>
@@ -56,7 +68,11 @@ export function UserMenu() {
 				<DropdownMenuLabel className="font-normal">
 					<div className="flex flex-col space-y-1">
 						<p className="text-sm font-medium leading-none">
-							{metadata?.full_name || "사용자"}
+							{isLoading ? (
+								<Skeleton className="h-4 w-20" />
+							) : (
+								metadata?.fullName || "사용자"
+							)}
 						</p>
 						<p className="text-xs leading-none text-muted-foreground">
 							{user.email}

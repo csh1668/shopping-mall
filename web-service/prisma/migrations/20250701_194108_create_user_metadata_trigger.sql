@@ -8,7 +8,7 @@ BEGIN
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
     COALESCE(NEW.raw_user_meta_data->>'phone', ''),
-    ARRAY['CUSTOMER'],
+    ARRAY['CUSTOMER'::public."UserRole"],
     NOW(),
     NOW()
   );

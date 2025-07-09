@@ -7,6 +7,8 @@ import { SearchBar } from "@/components/search";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useAuthStore } from "@/stores/auth-store";
+import { UserMenu } from "../user-menu";
 
 const categories = [
 	{ name: "패션", href: "/category/fashion" },
@@ -19,6 +21,7 @@ const categories = [
 
 export function Header() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
+	const { user } = useAuthStore();
 
 	return (
 		<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -73,15 +76,7 @@ export function Header() {
             </Button> */}
 
 						{/* 사용자 메뉴 */}
-						{/* {user ? (
-              <UserMenu />
-            ) : (
-              <Link href="/auth">
-                <Button variant="ghost" size="icon" className="hover-scale">
-                  <User className="h-5 w-5" />
-                </Button>
-              </Link>
-            )} */}
+						<UserMenu />
 
 						{/* 모바일 메뉴 */}
 						<Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>

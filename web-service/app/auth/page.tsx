@@ -17,9 +17,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FormField } from "@/components/ui/form-field";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { SocialButton } from "@/components/ui/social-button";
+import { useAuthStore } from "@/stores/auth-store";
+import { createLogger } from "@/utils/logger";
+
+const _logger = createLogger("AuthPage");
 
 export default function AuthPage() {
 	const router = useRouter();
+	const { signInWithProvider } = useAuthStore();
+
 	const [mode, setMode] = useState<"login" | "signup">("login");
 	const [isLoading, setIsLoading] = useState(false);
 	const [showSuccess, setShowSuccess] = useState(false);
@@ -166,10 +172,16 @@ export default function AuthPage() {
 				<CardContent className="space-y-4">
 					{/* 소셜 로그인 */}
 					<div className="space-y-3">
-						<SocialButton provider="google">
+						<SocialButton
+							provider="google"
+							onClick={() => signInWithProvider("google")}
+						>
 							Google로 {mode === "login" ? "로그인" : "회원가입"}
 						</SocialButton>
-						<SocialButton provider="kakao">
+						<SocialButton
+							provider="kakao"
+							onClick={() => signInWithProvider("kakao")}
+						>
 							카카오로 {mode === "login" ? "로그인" : "회원가입"}
 						</SocialButton>
 					</div>

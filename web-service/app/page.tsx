@@ -174,7 +174,6 @@ export default function HomePage() {
 				</div>
 			</section>
 
-			{/* CTA 섹션 */}
 			<section className="text-center space-y-6 py-12 bg-muted/30 rounded-lg">
 				<h2 className="text-3xl font-bold">지금 시작하세요!</h2>
 				<p className="text-muted-foreground max-w-md mx-auto">
