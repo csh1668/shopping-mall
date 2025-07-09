@@ -2,15 +2,12 @@
 
 ![shopping-mall](https://img.shields.io/badge/shopping%20mall-오픈소스%20쇼핑몰-007ACC?style=for-the-badge&logo=shopping-cart)
 
----
-
 ## 개요
 
 **shopping-mall**은 현대적인 온라인 쇼핑몰을 위한 완전한 오픈소스 템플릿입니다. Next.js, TypeScript, Prisma, Supabase를 기반으로 구축되어 누구든 빠르고 효율적으로 쇼핑몰을 구축할 수 있도록 설계되었습니다.
 
 #### [라이브 데모 (Vercel)](https://shopping-mall-cx0xae3if-csh1668s-projects.vercel.app/)
 
----
 
 ## 기술 스택
 
@@ -34,7 +31,6 @@
 - **[Vercel](https://vercel.com/)** - 원클릭 배포
 - ~~**[Docker](https://www.docker.com/)** - 컨테이너화 지원~~ (개발 예정)
 
----
 
 ## 사용법
 
