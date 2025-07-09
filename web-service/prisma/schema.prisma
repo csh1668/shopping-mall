@@ -105,6 +105,8 @@ model Product {
   productVariants ProductVariant[]
 
   @@index([slug])
+  @@index([categoryId, isActive])
+  @@index([price, isActive])
   @@map("products")
 }
 

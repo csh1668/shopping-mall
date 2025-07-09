@@ -28,15 +28,32 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { trpc } from "@/server/client";
 import { useAuthStore } from "@/stores/auth-store";
 
 export default function ProfilePage() {
-	const { user, metadata, updateUserMetadata } = useAuthStore();
+	const { user } = useAuthStore();
+
+	const { data: metadata, isLoading } = trpc.user.getUserMetadata.useQuery(
+		undefined,
+		{ enabled: !!user },
+	);
+
+	const updateMutation = trpc.user.updateUserMetadata.useMutation({
+		onSuccess: () => {
+			setMessage("프로필이 성공적으로 업데이트되었습니다.");
+			// tRPC가 자동으로 캐시를 무효화하여 최신 데이터를 가져옴
+		},
+		onError: (error) => {
+			setMessage(`프로필 업데이트에 실패했습니다: ${error.message}`);
+		},
+	});
+
 	const [formData, setFormData] = useState({
 		fullName: "",
 		phone: "",
 	});
-	const [loading, setLoading] = useState(false);
 	const [message, setMessage] = useState("");
 
 	useEffect(() => {
@@ -50,18 +67,12 @@ export default function ProfilePage() {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		setLoading(true);
 		setMessage("");
 
-		const { error } = await updateUserMetadata(formData);
-
-		if (error) {
-			setMessage("프로필 업데이트에 실패했습니다.");
-		} else {
-			setMessage("프로필이 성공적으로 업데이트되었습니다.");
-		}
-
-		setLoading(false);
+		await updateMutation.mutateAsync({
+			fullName: formData.fullName,
+			phone: formData.phone,
+		});
 	};
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,7 +82,7 @@ export default function ProfilePage() {
 		}));
 	};
 
-	if (!user || !metadata) {
+	if (!user) {
 		return null;
 	}
 
@@ -103,93 +114,103 @@ export default function ProfilePage() {
 									</CardDescription>
 								</CardHeader>
 								<CardContent>
-									<form onSubmit={handleSubmit} className="space-y-6">
-										{message && (
-											<Alert>
-												<AlertDescription>{message}</AlertDescription>
-											</Alert>
-										)}
-
-										{/* Avatar */}
-										<div className="flex items-center gap-4">
-											<Avatar className="h-20 w-20">
-												{/* <AvatarImage src={metadata.avatar_url || ""} alt={metadata.full_name || ""} /> */}
-												<AvatarFallback className="text-lg">
-													{metadata.fullName?.charAt(0) ||
-														metadata.email.charAt(0).toUpperCase()}
-												</AvatarFallback>
-											</Avatar>
-											<div>
-												<Button variant="outline" size="sm" disabled>
-													<Camera className="h-4 w-4 mr-2" />
-													사진 변경
-												</Button>
-												<p className="text-xs text-muted-foreground mt-1">
-													JPG, PNG 파일만 업로드 가능합니다
-												</p>
+									{isLoading ? (
+										<div className="space-y-6">
+											<Skeleton className="h-20 w-20 rounded-full" />
+											<div className="space-y-4">
+												<Skeleton className="h-4 w-32" />
+												<Skeleton className="h-10 w-full" />
+											</div>
+											<div className="space-y-4">
+												<Skeleton className="h-4 w-24" />
+												<Skeleton className="h-10 w-full" />
 											</div>
 										</div>
+									) : (
+										<form onSubmit={handleSubmit} className="space-y-6">
+											{message && (
+												<Alert>
+													<AlertDescription>{message}</AlertDescription>
+												</Alert>
+											)}
 
-										<Separator />
-
-										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-											<div className="space-y-2">
-												<Label htmlFor="full_name">이름</Label>
-												<div className="relative">
-													<User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-													<Input
-														id="full_name"
-														name="full_name"
-														value={formData.fullName}
-														onChange={handleChange}
-														className="pl-10"
-														placeholder="이름을 입력하세요"
-													/>
+											{/* Avatar */}
+											<div className="flex items-center gap-4">
+												<Avatar className="h-20 w-20">
+													<AvatarFallback className="text-lg">
+														{metadata?.fullName?.charAt(0) ||
+															metadata?.email.charAt(0).toUpperCase()}
+													</AvatarFallback>
+												</Avatar>
+												<div>
+													<Button variant="outline" size="sm" disabled>
+														<Camera className="h-4 w-4 mr-2" />
+														사진 변경
+													</Button>
+													<p className="text-xs text-muted-foreground mt-1">
+														JPG, PNG 파일만 업로드 가능합니다
+													</p>
 												</div>
 											</div>
 
-											<div className="space-y-2">
-												<Label htmlFor="email">이메일</Label>
-												<div className="relative">
-													<Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-													<Input
-														id="email"
-														value={metadata.email}
-														className="pl-10"
-														disabled
-													/>
+											<Separator />
+
+											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+												<div className="space-y-2">
+													<Label htmlFor="fullName">이름</Label>
+													<div className="relative">
+														<User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+														<Input
+															id="fullName"
+															name="fullName"
+															value={formData.fullName}
+															onChange={handleChange}
+															className="pl-10"
+															placeholder="이름을 입력하세요"
+														/>
+													</div>
 												</div>
-												<p className="text-xs text-muted-foreground">
-													이메일은 변경할 수 없습니다
-												</p>
+
+												<div className="space-y-2">
+													<Label htmlFor="email">이메일</Label>
+													<div className="relative">
+														<Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+														<Input
+															id="email"
+															value={metadata?.email || ""}
+															className="pl-10"
+															disabled
+														/>
+													</div>
+													<p className="text-xs text-muted-foreground">
+														이메일은 변경할 수 없습니다
+													</p>
+												</div>
+
+												<div className="space-y-2">
+													<Label htmlFor="phone">전화번호</Label>
+													<div className="relative">
+														<Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+														<Input
+															id="phone"
+															name="phone"
+															value={formData.phone}
+															onChange={handleChange}
+															className="pl-10"
+															placeholder="010-1234-5678"
+														/>
+													</div>
+												</div>
 											</div>
 
-											<div className="space-y-2">
-												<Label htmlFor="phone">전화번호</Label>
-												<div className="relative">
-													<Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-													<Input
-														id="phone"
-														name="phone"
-														value={formData.phone}
-														onChange={handleChange}
-														className="pl-10"
-														placeholder="010-1234-5678"
-													/>
-												</div>
-											</div>
-
-											{/* <div className="space-y-2">
-                        <Label>가입일</Label>
-                        <Input value={new Date(metadata.createdAt).toLocaleDateString("ko-KR")} disabled />
-                      </div> */}
-										</div>
-
-										<Button type="submit" disabled={loading}>
-											<Save className="h-4 w-4 mr-2" />
-											{loading ? "저장 중..." : "변경사항 저장"}
-										</Button>
-									</form>
+											<Button type="submit" disabled={updateMutation.isPending}>
+												<Save className="h-4 w-4 mr-2" />
+												{updateMutation.isPending
+													? "저장 중..."
+													: "변경사항 저장"}
+											</Button>
+										</form>
+									)}
 								</CardContent>
 							</Card>
 

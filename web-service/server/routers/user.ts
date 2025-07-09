@@ -16,12 +16,19 @@ export const userRouter = router({
 				id: user.id,
 			},
 			select: {
-				id: true,
+				email: true,
 				fullName: true,
 				phone: true,
 				role: true,
 			},
 		});
+
+		if (!metadata) {
+			throw new TRPCError({
+				code: "NOT_FOUND",
+				message: "사용자 메타데이터를 찾을 수 없습니다.",
+			});
+		}
 
 		return metadata;
 	}),
