@@ -1,5 +1,5 @@
 {
-	"name": "my-v0-project",
+	"name": "shopping-mall",
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
@@ -7,7 +7,8 @@
 		"dev": "next dev --turbo",
 		"lint": "biome check --write --unsafe .",
 		"start": "next start",
-		"postinstall": "npx prisma generate && npx lefthook install"
+		"postinstall": "npx prisma generate && npx lefthook install",
+		"db:seed": "npx prisma db seed"
 	},
 	"dependencies": {
 		"@hookform/resolvers": "^3.10.0",
@@ -81,6 +82,10 @@
 		"lefthook": "^1.12.1",
 		"postcss": "^8.5",
 		"tailwindcss": "^3.4.17",
+		"tsx": "^4.20.3",
 		"typescript": "^5"
+	},
+	"prisma": {
+		"seed": "tsx prisma/seed.ts"
 	}
 }

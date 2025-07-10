@@ -1,92 +1,29 @@
-"use client";
-
-import { Gift, Heart, ShoppingCart, Star, TrendingUp, Zap } from "lucide-react";
-import Image from "next/image";
+import { Gift, TrendingUp, Zap } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
 import { AnimatedCard } from "@/components/ui/animated-card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CardContent } from "@/components/ui/card";
+import { sTrpc } from "@/server/server";
+import Products from "@/app/components/Products";
+import Categories from "@/app/components/Categories";
 
-// 임시 데이터
-const featuredProducts = [
-	{
-		id: 1,
-		name: "프리미엄 무선 이어폰",
-		price: 129000,
-		originalPrice: 159000,
-		image: "/placeholder.svg?height=300&width=300",
-		rating: 4.8,
-		reviews: 1234,
-		badge: "베스트셀러",
-		inStock: true,
-	},
-	{
-		id: 2,
-		name: "스마트 워치 프로",
-		price: 299000,
-		originalPrice: 349000,
-		image: "/placeholder.svg?height=300&width=300",
-		rating: 4.9,
-		reviews: 856,
-		badge: "신상품",
-		inStock: true,
-	},
-	{
-		id: 3,
-		name: "미니멀 백팩",
-		price: 89000,
-		originalPrice: 119000,
-		image: "/placeholder.svg?height=300&width=300",
-		rating: 4.7,
-		reviews: 432,
-		badge: "25% 할인",
-		inStock: true,
-	},
-	{
-		id: 4,
-		name: "블루투스 스피커",
-		price: 79000,
-		originalPrice: 99000,
-		image: "/placeholder.svg?height=300&width=300",
-		rating: 4.6,
-		reviews: 678,
-		badge: "특가",
-		inStock: true,
-	},
-];
+export default async function HomePage() {
+	// 서버에서 데이터 미리 fetch - 병렬 처리로 성능 최적화
+	const [productsData, categoriesData] = await Promise.all([
+		sTrpc.product.list.fetch({
+			page: 1,
+			limit: 8,
+			isActive: true,
+			sortBy: "createdAt",
+			sortOrder: "desc",
+		}).catch(() => ({ 
+			products: [], 
+			pagination: { total: 0, page: 1, limit: 8, totalPages: 0 } 
+		})),
+		sTrpc.category.list.fetch({
+			isActive: true,
+		}).catch(() => []),
+	]);
 
-const categories = [
-	{ name: "패션", href: "/category/fashion", icon: "👕", color: "bg-pink-100" },
-	{
-		name: "전자제품",
-		href: "/category/electronics",
-		icon: "📱",
-		color: "bg-blue-100",
-	},
-	{
-		name: "홈&리빙",
-		href: "/category/home",
-		icon: "🏠",
-		color: "bg-green-100",
-	},
-	{
-		name: "뷰티",
-		href: "/category/beauty",
-		icon: "💄",
-		color: "bg-purple-100",
-	},
-	{
-		name: "스포츠",
-		href: "/category/sports",
-		icon: "⚽",
-		color: "bg-orange-100",
-	},
-	{ name: "도서", href: "/category/books", icon: "📚", color: "bg-yellow-100" },
-];
-
-export default function HomePage() {
 	return (
 		<div className="space-y-12 py-8">
 			{/* 히어로 섹션 */}
@@ -101,28 +38,10 @@ export default function HomePage() {
 				</div>
 			</section>
 
-			{/* 카테고리 */}
+			{/* 카테고리 - 서버에서 미리 fetch한 데이터 사용 */}
 			<section className="space-y-6">
 				<h2 className="text-2xl font-bold text-center">카테고리</h2>
-				<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-					{categories.map((category, index) => (
-						<Link key={category.name} href={category.href}>
-							<AnimatedCard
-								className="p-6 text-center cursor-pointer group"
-								delay={index * 100}
-							>
-								<div
-									className={`w-16 h-16 ${category.color} rounded-full flex items-center justify-center mx-auto mb-3 text-2xl group-hover:scale-110 transition-transform`}
-								>
-									{category.icon}
-								</div>
-								<h3 className="font-medium transition-colors">
-									{category.name}
-								</h3>
-							</AnimatedCard>
-						</Link>
-					))}
-				</div>
+				<Categories data={categoriesData} />
 			</section>
 
 			{/* 특징 */}
@@ -158,20 +77,16 @@ export default function HomePage() {
 				</AnimatedCard>
 			</section>
 
-			{/* 인기 상품 */}
+			{/* 인기 상품 - 서버에서 미리 fetch한 데이터 사용 */}
 			<section className="space-y-6">
 				<div className="flex items-center justify-between">
 					<h2 className="text-2xl font-bold">인기 상품</h2>
-					<Link href="/category/all">
+					<Link href="/products">
 						<Button variant="outline">전체 보기</Button>
 					</Link>
 				</div>
 
-				<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-					{featuredProducts.map((product, index) => (
-						<ProductCard key={product.id} product={product} index={index} />
-					))}
-				</div>
+				<Products data={productsData} />
 			</section>
 
 			<section className="text-center space-y-6 py-12 bg-muted/30 rounded-lg">
@@ -185,7 +100,7 @@ export default function HomePage() {
 							회원가입하기
 						</Button>
 					</Link>
-					<Link href="/category/all">
+					<Link href="/products">
 						<Button
 							size="lg"
 							variant="outline"
@@ -197,77 +112,5 @@ export default function HomePage() {
 				</div>
 			</section>
 		</div>
-	);
-}
-
-// biome-ignore lint/suspicious/noExplicitAny: 임시
-function ProductCard({ product, index }: { product: any; index: number }) {
-	const [isWishlisted, setIsWishlisted] = useState(false);
-
-	return (
-		<Link href={`/product/${product.id}`}>
-			<AnimatedCard className="group cursor-pointer" delay={index * 100}>
-				<CardContent className="p-0">
-					<div className="relative overflow-hidden rounded-t-lg">
-						<Image
-							src={product.image || "/placeholder.svg"}
-							alt={product.name}
-							width={300}
-							height={300}
-							className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-						/>
-						{product.badge && (
-							<Badge className="absolute top-3 left-3">{product.badge}</Badge>
-						)}
-						<Button
-							variant="secondary"
-							size="icon"
-							className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
-							onClick={(e) => {
-								e.preventDefault();
-								setIsWishlisted(!isWishlisted);
-							}}
-						>
-							<Heart
-								className={`h-4 w-4 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`}
-							/>
-						</Button>
-					</div>
-					<div className="p-4">
-						<h3 className="font-medium mb-2 group-hover:text-primary transition-colors line-clamp-2">
-							{product.name}
-						</h3>
-						<div className="flex items-center gap-1 mb-2">
-							<Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-							<span className="text-sm font-medium">{product.rating}</span>
-							<span className="text-sm text-muted-foreground">
-								({product.reviews})
-							</span>
-						</div>
-						<div className="flex items-center gap-2 mb-3">
-							<span className="text-lg font-bold">
-								{product.price.toLocaleString()}원
-							</span>
-							{product.originalPrice > product.price && (
-								<span className="text-sm text-muted-foreground line-through">
-									{product.originalPrice.toLocaleString()}원
-								</span>
-							)}
-						</div>
-						<Button
-							size="sm"
-							className="w-full opacity-0 group-hover:opacity-100 transition-opacity"
-							onClick={(e) => {
-								e.preventDefault();
-								// TODO: addItem
-							}}
-						>
-							<ShoppingCart className="h-4 w-4 mr-2" />
-							장바구니 담기
-						</Button>
-					</div>
-				</CardContent>
-			</AnimatedCard>
-		</Link>
 	);
 }

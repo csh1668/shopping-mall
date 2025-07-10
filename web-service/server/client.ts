@@ -5,7 +5,7 @@ import {
 } from "@trpc/react-query";
 import { supabase } from "@/lib/supabase-client";
 import { createLogger } from "@/utils/logger";
-import type { AppRouter } from "./router";
+import { type AppRouter } from "./router";
 
 const logger = createLogger("tRPC-Client");
 
@@ -13,7 +13,7 @@ const logger = createLogger("tRPC-Client");
 export const trpc = createTRPCReact<AppRouter>();
 
 // tRPC Vanilla Client
-export const sTrpc = createTRPCClient<AppRouter>({
+export const vTrpc = createTRPCClient<AppRouter>({
 	links: [
 		httpBatchLink({
 			url: "/api/trpc",

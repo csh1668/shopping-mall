@@ -11,12 +11,12 @@ import { useAuthStore } from "@/stores/auth-store";
 import { UserMenu } from "../user-menu";
 
 const categories = [
-	{ name: "패션", href: "/category/fashion" },
-	{ name: "전자제품", href: "/category/electronics" },
-	{ name: "홈&리빙", href: "/category/home" },
-	{ name: "뷰티", href: "/category/beauty" },
-	{ name: "스포츠", href: "/category/sports" },
-	{ name: "도서", href: "/category/books" },
+	{ name: "패션", href: "/c/fashion" },
+	{ name: "전자제품", href: "/c/electronics" },
+	{ name: "홈&리빙", href: "/c/home" },
+	{ name: "뷰티", href: "/c/beauty" },
+	{ name: "스포츠", href: "/c/sports" },
+	{ name: "도서", href: "/c/books" },
 ];
 
 export function Header() {
