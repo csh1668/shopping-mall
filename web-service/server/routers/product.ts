@@ -72,22 +72,31 @@ export const productRouter = router({
 			take: limit,
 		});
 
-		// 리뷰 평균 평점 계산
-		const productsWithRating = await Promise.all(
-			products.map(async (product) => {
-				const avgRating = await prisma.review.aggregate({
-					where: { productId: product.id },
-					_avg: { rating: true },
-				});
+		// 리뷰 평균 평점 계산 (Grouped Aggregate Query)
+		const ratings = await prisma.review.groupBy({
+			by: ["productId"],
+			_avg: { rating: true },
+			where: {
+				productId: {
+					in: products.map((p) => p.id),
+				},
+			},
+		});
 
-				return {
-					...product,
-					rating: avgRating._avg.rating || 0,
-					reviewCount: product._count.reviews,
-					orderCount: product._count.orderItems,
-				};
-			}),
+		const ratingsMap = ratings.reduce(
+			(acc, curr) => {
+				acc[curr.productId] = curr._avg.rating || 0;
+				return acc;
+			},
+			{} as Record<string, number>,
 		);
+
+		const productsWithRating = products.map((product) => ({
+			...product,
+			rating: ratingsMap[product.id] || 0,
+			reviewCount: product._count.reviews,
+			orderCount: product._count.orderItems,
+		}));
 
 		return {
 			products: productsWithRating,
@@ -135,13 +144,13 @@ export const productRouter = router({
 		const avgRating = await prisma.review.aggregate({
 			where: { productId: product.id },
 			_avg: { rating: true },
-			_count: true,
+			_count: { _all: true },
 		});
 
 		return {
 			...product,
 			rating: avgRating._avg.rating || 0,
-			reviewCount: avgRating._count,
+			reviewCount: avgRating._count._all,
 		};
 	}),
 
@@ -182,13 +191,13 @@ export const productRouter = router({
 			const avgRating = await prisma.review.aggregate({
 				where: { productId: product.id },
 				_avg: { rating: true },
-				_count: true,
+				_count: { _all: true },
 			});
 
 			return {
 				...product,
 				rating: avgRating._avg.rating || 0,
-				reviewCount: avgRating._count,
+				reviewCount: avgRating._count._all,
 			};
 		}),
 

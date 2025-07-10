@@ -1,6 +1,5 @@
 import type { inferRouterOutputs } from "@trpc/server";
 import { notFound } from "next/navigation";
-import { vTrpc } from "@/server/client";
 import type { AppRouter } from "@/server/router";
 import { sTrpc } from "@/server/server";
 import CategoryClient from "./category-client";
@@ -55,7 +54,7 @@ export default async function CategoryPage({
 
 	if (category !== "all") {
 		try {
-			categoryData = await vTrpc.category.getBySlug.query({ slug: category });
+			categoryData = await sTrpc.category.getBySlug.fetch({ slug: category });
 			categoryName = categoryData.name;
 		} catch (_error) {
 			notFound();
@@ -83,7 +82,7 @@ export default async function CategoryPage({
 	};
 
 	try {
-		productListResult = await vTrpc.product.list.query({
+		productListResult = await sTrpc.product.list.fetch({
 			page,
 			limit,
 			search,
@@ -101,7 +100,7 @@ export default async function CategoryPage({
 	// 브랜드 목록 가져오기 (필터용)
 	let brands: string[] = [];
 	try {
-		brands = await vTrpc.product.getBrands.query({
+		brands = await sTrpc.product.getBrands.fetch({
 			categoryId: categoryData?.id,
 		});
 	} catch (error) {
