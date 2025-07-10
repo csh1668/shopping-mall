@@ -25,3 +25,13 @@ export const getSupabaseServerClient = async () => {
 		},
 	});
 };
+
+export const getSupabaseServerClientNoCookie = async () => {
+	return createServerClient(supabaseUrl, supabaseAnonKey, {
+		cookies: {
+			getAll() {
+				return [];
+			},
+		},
+	});
+};

@@ -7,21 +7,19 @@ import { SearchBar } from "@/components/search";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAuthStore } from "@/stores/auth-store";
 import { UserMenu } from "../user-menu";
 
 const categories = [
-	{ name: "패션", href: "/category/fashion" },
-	{ name: "전자제품", href: "/category/electronics" },
-	{ name: "홈&리빙", href: "/category/home" },
-	{ name: "뷰티", href: "/category/beauty" },
-	{ name: "스포츠", href: "/category/sports" },
-	{ name: "도서", href: "/category/books" },
+	{ name: "패션", href: "/c/fashion" },
+	{ name: "전자제품", href: "/c/electronics" },
+	{ name: "홈&리빙", href: "/c/home" },
+	{ name: "뷰티", href: "/c/beauty" },
+	{ name: "스포츠", href: "/c/sports" },
+	{ name: "도서", href: "/c/books" },
 ];
 
 export function Header() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
-	const { user } = useAuthStore();
 
 	return (
 		<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

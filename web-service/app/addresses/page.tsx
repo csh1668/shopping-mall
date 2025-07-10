@@ -156,7 +156,7 @@ export default function AddressesPage() {
 				<div className="container px-4 py-8">
 					{/* Header */}
 					<div className="flex items-center gap-4 mb-8">
-						<Link href="/my-page">
+						<Link href="/profile">
 							<Button variant="ghost" size="icon">
 								<ArrowLeft className="h-4 w-4" />
 							</Button>
