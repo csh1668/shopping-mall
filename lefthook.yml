@@ -1,15 +1,29 @@
 pre-commit:
   commands:
-    biome:
+    biome-check:
       root: "web-service/"
-      run: |
-        npm run lint
-        npx tsc --noEmit
+      glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}"
+      run: npx @biomejs/biome check --no-errors-on-unmatched --files-ignore-unknown=true --colors=off {staged_files}
+    
+    biome-fix:
+      root: "web-service/"
+      glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}"
+      run: npx @biomejs/biome check --write --no-errors-on-unmatched --files-ignore-unknown=true --colors=off {staged_files}
+      stage_fixed: true
+    
+    typescript-check:
+      root: "web-service/"
+      glob: "*.{ts,tsx}"
+      run: npx tsc --noEmit
 
 pre-push:
   commands:
-    biome:
+    biome-check:
       root: "web-service/"
-      run: |
-        npm run lint
-        npx tsc --noEmit
+      glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}"
+      run: npx @biomejs/biome check --no-errors-on-unmatched --files-ignore-unknown=true --colors=off {push_files}
+    
+    typescript-check:
+      root: "web-service/"
+      glob: "*.{ts,tsx}"
+      run: npx tsc --noEmit

@@ -7,7 +7,6 @@ import { SearchBar } from "@/components/search";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAuthStore } from "@/stores/auth-store";
 import { UserMenu } from "../user-menu";
 
 const categories = [
@@ -21,7 +20,6 @@ const categories = [
 
 export function Header() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
-	const { user } = useAuthStore();
 
 	return (
 		<header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

@@ -42,9 +42,7 @@ export default function Categories({ data }: CategoriesProps) {
 						<h3 className="font-medium text-sm group-hover:text-primary transition-colors">
 							전체
 						</h3>
-						<p className="text-xs text-muted-foreground mt-1">
-							모든 상품
-						</p>
+						<p className="text-xs text-muted-foreground mt-1">모든 상품</p>
 					</div>
 				</AnimatedCard>
 			</Link>
@@ -52,15 +50,17 @@ export default function Categories({ data }: CategoriesProps) {
 			{/* 카테고리 목록 */}
 			{data.map((category, index) => {
 				const style = categoryStyles[category.slug] || categoryStyles.default;
-				
+
 				return (
 					<Link key={category.id} href={`/c/${category.slug}`}>
-						<AnimatedCard 
+						<AnimatedCard
 							className="p-6 hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-pointer group"
 							delay={index * 50}
 						>
 							<div className="text-center">
-								<div className={`w-16 h-16 ${style.color} rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-105 transition-transform`}>
+								<div
+									className={`w-16 h-16 ${style.color} rounded-full flex items-center justify-center mx-auto mb-3 group-hover:scale-105 transition-transform`}
+								>
 									<span className="text-2xl">{style.icon}</span>
 								</div>
 								<h3 className="font-medium text-sm group-hover:text-primary transition-colors">
@@ -76,4 +76,4 @@ export default function Categories({ data }: CategoriesProps) {
 			})}
 		</div>
 	);
-} 
+}

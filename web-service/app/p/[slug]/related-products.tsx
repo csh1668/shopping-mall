@@ -1,20 +1,21 @@
+import { Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { sTrpc } from "@/server/server";
 import { Card, CardContent } from "@/components/ui/card";
-import { Star } from "lucide-react";
+import { sTrpc } from "@/server/server";
 
 interface RelatedProductsProps {
 	categoryId: string;
 	currentProductId: string;
 }
 
-export default async function RelatedProducts({ 
-	categoryId, 
-	currentProductId 
+export default async function RelatedProducts({
+	categoryId,
+	// biome-ignore lint/correctness/noUnusedFunctionParameters: 추후 사용 예정
+	currentProductId,
 }: RelatedProductsProps) {
-  // TODO: 현재 상품 제외 기능 추가
-	
+	// TODO: 현재 상품 제외 기능 추가
+
 	const relatedProducts = await sTrpc.product.list.fetch({
 		page: 1,
 		limit: 5,
@@ -57,11 +58,12 @@ export default async function RelatedProducts({
 										<span className="text-lg font-bold">
 											{product.price.toLocaleString()}원
 										</span>
-										{product.originalPrice && product.originalPrice > product.price && (
-											<span className="text-sm text-muted-foreground line-through">
-												{product.originalPrice.toLocaleString()}원
-											</span>
-										)}
+										{product.originalPrice &&
+											product.originalPrice > product.price && (
+												<span className="text-sm text-muted-foreground line-through">
+													{product.originalPrice.toLocaleString()}원
+												</span>
+											)}
 									</div>
 								</div>
 							</CardContent>
@@ -71,4 +73,4 @@ export default async function RelatedProducts({
 			</div>
 		</div>
 	);
-} 
+}

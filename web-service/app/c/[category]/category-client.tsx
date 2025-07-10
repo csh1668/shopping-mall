@@ -1,9 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
 import {
 	Filter,
 	Grid3X3,
@@ -13,6 +9,10 @@ import {
 	SlidersHorizontal,
 	Star,
 } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,6 +39,7 @@ import { Slider } from "@/components/ui/slider";
 interface CategoryClientProps {
 	category: string;
 	categoryName: string;
+	// biome-ignore lint/suspicious/noExplicitAny: 실제 타입은 tRPC에서 자동 생성됨
 	products: any[];
 	pagination: {
 		total: number;
@@ -72,7 +73,7 @@ export default function CategoryClient({
 }: CategoryClientProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	
+
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 	const [priceRange, setPriceRange] = useState([
 		initialFilters.minPrice || 0,
@@ -81,9 +82,10 @@ export default function CategoryClient({
 	const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
 	const [searchQuery, setSearchQuery] = useState(initialFilters.search || "");
 
+	// biome-ignore lint/suspicious/noExplicitAny: 실제 타입은 tRPC에서 자동 생성됨
 	const updateFilters = (updates: Record<string, any>) => {
 		const params = new URLSearchParams(searchParams.toString());
-		
+
 		Object.entries(updates).forEach(([key, value]) => {
 			if (value === undefined || value === "" || value === null) {
 				params.delete(key);
@@ -91,10 +93,10 @@ export default function CategoryClient({
 				params.set(key, String(value));
 			}
 		});
-		
+
 		// 필터 변경 시 첫 페이지로
 		params.delete("page");
-		
+
 		router.push(`/c/${category}?${params.toString()}`);
 	};
 
@@ -102,7 +104,7 @@ export default function CategoryClient({
 		const newBrands = checked
 			? [...selectedBrands, brand]
 			: selectedBrands.filter((b) => b !== brand);
-		
+
 		setSelectedBrands(newBrands);
 		updateFilters({ brands: newBrands.join(",") });
 	};
@@ -181,11 +183,7 @@ export default function CategoryClient({
 				</div>
 			</div>
 
-			<Button
-				variant="outline"
-				onClick={clearFilters}
-				className="w-full"
-			>
+			<Button variant="outline" onClick={clearFilters} className="w-full">
 				필터 초기화
 			</Button>
 		</div>
@@ -212,20 +210,14 @@ export default function CategoryClient({
 				<div className="flex items-center justify-between mb-6">
 					<div>
 						<h1 className="text-2xl font-bold mb-2">{categoryName}</h1>
-						<p className="text-muted-foreground">
-							{pagination.total}개 상품
-						</p>
+						<p className="text-muted-foreground">{pagination.total}개 상품</p>
 					</div>
 
 					<div className="flex items-center gap-4">
 						{/* Mobile Filter Button */}
 						<Sheet>
 							<SheetTrigger asChild>
-								<Button
-									variant="outline"
-									size="sm"
-									className="lg:hidden"
-								>
+								<Button variant="outline" size="sm" className="lg:hidden">
 									<SlidersHorizontal className="h-4 w-4 mr-2" />
 									필터
 								</Button>
@@ -241,8 +233,8 @@ export default function CategoryClient({
 						</Sheet>
 
 						{/* Sort */}
-						<Select 
-							value={initialFilters.sort || "createdAt"} 
+						<Select
+							value={initialFilters.sort || "createdAt"}
 							onValueChange={(value) => updateFilters({ sort: value })}
 						>
 							<SelectTrigger className="w-32">
@@ -315,13 +307,15 @@ export default function CategoryClient({
 							>
 								이전
 							</Button>
-							
+
 							{[...Array(Math.min(5, pagination.totalPages))].map((_, i) => {
 								const pageNum = i + 1;
 								return (
 									<Button
 										key={pageNum}
-										variant={pageNum === pagination.page ? "default" : "outline"}
+										variant={
+											pageNum === pagination.page ? "default" : "outline"
+										}
 										size="sm"
 										onClick={() => updateFilters({ page: pageNum })}
 									>
@@ -329,7 +323,7 @@ export default function CategoryClient({
 									</Button>
 								);
 							})}
-							
+
 							<Button
 								variant="outline"
 								size="sm"
@@ -350,6 +344,7 @@ function ProductCard({
 	product,
 	viewMode,
 }: {
+	// biome-ignore lint/suspicious/noExplicitAny: 실제 타입은 tRPC에서 자동 생성됨
 	product: any;
 	viewMode: "grid" | "list";
 }) {
@@ -357,7 +352,9 @@ function ProductCard({
 
 	// 할인율 계산
 	const discountRate = product.originalPrice
-		? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+		? Math.round(
+				((product.originalPrice - product.price) / product.originalPrice) * 100,
+			)
 		: 0;
 
 	if (viewMode === "list") {
@@ -407,9 +404,9 @@ function ProductCard({
 							</div>
 							<div className="flex items-center gap-1">
 								<div className="flex">
-									{[...Array(5)].map((_, i) => (
+									{[...Array(5)].map((i) => (
 										<Star
-											key={i}
+											key={`rating-${product.id}-${i}`}
 											className={`h-3 w-3 ${
 												i < Math.floor(product.rating)
 													? "fill-yellow-400 text-yellow-400"
@@ -446,7 +443,11 @@ function ProductCard({
 								>
 									장바구니
 								</Button>
-								<Button size="sm" variant="outline" disabled={product.stock === 0}>
+								<Button
+									size="sm"
+									variant="outline"
+									disabled={product.stock === 0}
+								>
 									바로구매
 								</Button>
 							</div>
@@ -458,8 +459,8 @@ function ProductCard({
 	}
 
 	return (
-								<Link href={`/p/${product.slug}`}>
-							<Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+		<Link href={`/p/${product.slug}`}>
+			<Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
 				<CardContent className="p-0">
 					<div className="relative overflow-hidden rounded-t-lg">
 						<Image
@@ -470,7 +471,9 @@ function ProductCard({
 							className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
 						/>
 						{discountRate > 0 && (
-							<Badge className="absolute top-3 left-3">{discountRate}% 할인</Badge>
+							<Badge className="absolute top-3 left-3">
+								{discountRate}% 할인
+							</Badge>
 						)}
 						<Button
 							variant="secondary"
@@ -522,4 +525,4 @@ function ProductCard({
 			</Card>
 		</Link>
 	);
-} 
+}

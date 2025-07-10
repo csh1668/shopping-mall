@@ -4,148 +4,146 @@ import { prisma } from "@/lib/prisma";
 import { adminProcedure, publicProcedure, router } from "@/server";
 import {
 	createProductSchema,
-	updateProductSchema,
+	createProductVariantSchema,
 	listProductsSchema,
 	productIdSchema,
-	createProductVariantSchema,
+	updateProductSchema,
 } from "@/server/schemas/product";
 
 export const productRouter = router({
 	// 상품 목록 조회 (공개)
-	list: publicProcedure
-		.input(listProductsSchema)
-		.query(async ({ input }) => {
-			const {
+	list: publicProcedure.input(listProductsSchema).query(async ({ input }) => {
+		const {
+			page,
+			limit,
+			search,
+			categoryId,
+			minPrice,
+			maxPrice,
+			brand,
+			isActive,
+			sortBy,
+			sortOrder,
+		} = input;
+
+		// 필터 조건 구성
+		const where = {
+			...(search && {
+				OR: [
+					{ name: { contains: search, mode: "insensitive" as const } },
+					{ description: { contains: search, mode: "insensitive" as const } },
+					{ brand: { contains: search, mode: "insensitive" as const } },
+				],
+			}),
+			...(categoryId && { categoryId }),
+			...(minPrice !== undefined && { price: { gte: minPrice } }),
+			...(maxPrice !== undefined && { price: { lte: maxPrice } }),
+			...(brand && {
+				brand: { contains: brand, mode: "insensitive" as const },
+			}),
+			...(isActive !== undefined && { isActive }),
+		};
+
+		// 전체 개수 조회
+		const total = await prisma.product.count({ where });
+
+		// 상품 목록 조회
+		const products = await prisma.product.findMany({
+			where,
+			include: {
+				category: {
+					select: {
+						id: true,
+						name: true,
+						slug: true,
+					},
+				},
+				_count: {
+					select: {
+						reviews: true,
+						orderItems: true,
+					},
+				},
+			},
+			orderBy: {
+				[sortBy]: sortOrder,
+			},
+			skip: (page - 1) * limit,
+			take: limit,
+		});
+
+		// 리뷰 평균 평점 계산
+		const productsWithRating = await Promise.all(
+			products.map(async (product) => {
+				const avgRating = await prisma.review.aggregate({
+					where: { productId: product.id },
+					_avg: { rating: true },
+				});
+
+				return {
+					...product,
+					rating: avgRating._avg.rating || 0,
+					reviewCount: product._count.reviews,
+					orderCount: product._count.orderItems,
+				};
+			}),
+		);
+
+		return {
+			products: productsWithRating,
+			pagination: {
+				total,
 				page,
 				limit,
-				search,
-				categoryId,
-				minPrice,
-				maxPrice,
-				brand,
-				isActive,
-				sortBy,
-				sortOrder,
-			} = input;
-
-			// 필터 조건 구성
-			const where = {
-				...(search && {
-					OR: [
-						{ name: { contains: search, mode: "insensitive" as const } },
-						{ description: { contains: search, mode: "insensitive" as const } },
-						{ brand: { contains: search, mode: "insensitive" as const } },
-					],
-				}),
-				...(categoryId && { categoryId }),
-				...(minPrice !== undefined && { price: { gte: minPrice } }),
-				...(maxPrice !== undefined && { price: { lte: maxPrice } }),
-				...(brand && { brand: { contains: brand, mode: "insensitive" as const } }),
-				...(isActive !== undefined && { isActive }),
-			};
-
-			// 전체 개수 조회
-			const total = await prisma.product.count({ where });
-
-			// 상품 목록 조회
-			const products = await prisma.product.findMany({
-				where,
-				include: {
-					category: {
-						select: {
-							id: true,
-							name: true,
-							slug: true,
-						},
-					},
-					_count: {
-						select: {
-							reviews: true,
-							orderItems: true,
-						},
-					},
-				},
-				orderBy: {
-					[sortBy]: sortOrder,
-				},
-				skip: (page - 1) * limit,
-				take: limit,
-			});
-
-			// 리뷰 평균 평점 계산
-			const productsWithRating = await Promise.all(
-				products.map(async (product) => {
-					const avgRating = await prisma.review.aggregate({
-						where: { productId: product.id },
-						_avg: { rating: true },
-					});
-
-					return {
-						...product,
-						rating: avgRating._avg.rating || 0,
-						reviewCount: product._count.reviews,
-						orderCount: product._count.orderItems,
-					};
-				}),
-			);
-
-			return {
-				products: productsWithRating,
-				pagination: {
-					total,
-					page,
-					limit,
-					totalPages: Math.ceil(total / limit),
-				},
-			};
-		}),
+				totalPages: Math.ceil(total / limit),
+			},
+		};
+	}),
 
 	// 상품 상세 조회 (공개)
-	getById: publicProcedure
-		.input(productIdSchema)
-		.query(async ({ input }) => {
-			const product = await prisma.product.findUnique({
-				where: { id: input.id },
-				include: {
-					category: true,
-					productVariants: {
-						where: { isActive: true },
-					},
-					reviews: {
-						take: 5,
-						orderBy: { createdAt: "desc" },
-						include: {
-							user: {
-								select: {
-									fullName: true,
-									email: true,
-								},
+	getById: publicProcedure.input(productIdSchema).query(async ({ input }) => {
+		const product = await prisma.product.findUnique({
+			where: { id: input.id },
+			include: {
+				category: true,
+				productVariants: {
+					where: { isActive: true },
+				},
+				reviews: {
+					take: 5,
+					orderBy: { createdAt: "desc" },
+					include: {
+						user: {
+							select: {
+								fullName: true,
+								email: true,
 							},
 						},
 					},
 				},
+			},
+		});
+
+		if (!product) {
+			throw new TRPCError({
+				code: "NOT_FOUND",
+				message: "상품을 찾을 수 없습니다.",
 			});
+		}
 
-			if (!product) {
-				throw new TRPCError({
-					code: "NOT_FOUND",
-					message: "상품을 찾을 수 없습니다.",
-				});
-			}
+		// 평균 평점 계산
+		const avgRating = await prisma.review.aggregate({
+			where: { productId: product.id },
+			_avg: { rating: true },
+			_count: true,
+		});
 
-			// 평균 평점 계산
-			const avgRating = await prisma.review.aggregate({
-				where: { productId: product.id },
-				_avg: { rating: true },
-				_count: true,
-			});
-
-			return {
-				...product,
-				rating: avgRating._avg.rating || 0,
-				reviewCount: avgRating._count,
-			};
-		}),
+		return {
+			...product,
+			rating: avgRating._avg.rating || 0,
+			reviewCount: avgRating._count,
+		};
+	}),
 
 	// 상품 상세 조회 by slug (공개)
 	getBySlug: publicProcedure
@@ -220,14 +218,16 @@ export const productRouter = router({
 	// 상품 생성 (관리자 전용)
 	create: adminProcedure
 		.input(createProductSchema)
-		.mutation(async ({ input, ctx }) => {
+		.mutation(async ({ input }) => {
 			try {
 				// slug 자동 생성 (제공되지 않은 경우)
-				const slug = input.slug || encodeURIComponent(
-					input.name
-						.replace(/\s+/g, "-") // 띄어쓰기를 하이픈으로 변경
-						.replace(/(^-|-$)/g, "") // 시작과 끝의 하이픈 제거
-				);
+				const slug =
+					input.slug ||
+					encodeURIComponent(
+						input.name
+							.replace(/\s+/g, "-") // 띄어쓰기를 하이픈으로 변경
+							.replace(/(^-|-$)/g, ""), // 시작과 끝의 하이픈 제거
+					);
 
 				// 중복 slug 체크
 				const existingProduct = await prisma.product.findUnique({
@@ -284,7 +284,7 @@ export const productRouter = router({
 				data: updateProductSchema,
 			}),
 		)
-		.mutation(async ({ input, ctx }) => {
+		.mutation(async ({ input }) => {
 			const { id, data } = input;
 
 			// 상품 존재 여부 확인
@@ -339,39 +339,37 @@ export const productRouter = router({
 		}),
 
 	// 상품 삭제 (관리자 전용)
-	delete: adminProcedure
-		.input(productIdSchema)
-		.mutation(async ({ input, ctx }) => {
-			// 주문된 상품인지 확인
-			const orderCount = await prisma.orderItem.count({
-				where: { productId: input.id },
-			});
+	delete: adminProcedure.input(productIdSchema).mutation(async ({ input }) => {
+		// 주문된 상품인지 확인
+		const orderCount = await prisma.orderItem.count({
+			where: { productId: input.id },
+		});
 
-			if (orderCount > 0) {
-				// 주문 이력이 있는 상품은 비활성화만 진행
-				const product = await prisma.product.update({
-					where: { id: input.id },
-					data: { isActive: false },
-				});
-
-				return {
-					...product,
-					message: "주문 이력이 있는 상품은 비활성화 처리되었습니다.",
-				};
-			}
-
-			// 주문 이력이 없는 경우 완전 삭제
-			await prisma.product.delete({
+		if (orderCount > 0) {
+			// 주문 이력이 있는 상품은 비활성화만 진행
+			const product = await prisma.product.update({
 				where: { id: input.id },
+				data: { isActive: false },
 			});
 
-			return { success: true, message: "상품이 삭제되었습니다." };
-		}),
+			return {
+				...product,
+				message: "주문 이력이 있는 상품은 비활성화 처리되었습니다.",
+			};
+		}
+
+		// 주문 이력이 없는 경우 완전 삭제
+		await prisma.product.delete({
+			where: { id: input.id },
+		});
+
+		return { success: true, message: "상품이 삭제되었습니다." };
+	}),
 
 	// 상품 옵션 추가 (관리자 전용)
 	addVariant: adminProcedure
 		.input(createProductVariantSchema)
-		.mutation(async ({ input, ctx }) => {
+		.mutation(async ({ input }) => {
 			// 상품 존재 여부 확인
 			const product = await prisma.product.findUnique({
 				where: { id: input.productId },
@@ -388,7 +386,7 @@ export const productRouter = router({
 			const existingVariant = await prisma.productVariant.findFirst({
 				where: {
 					productId: input.productId,
-					type: input.type as any,
+					type: input.type,
 					value: input.value,
 				},
 			});
@@ -403,7 +401,7 @@ export const productRouter = router({
 			const variant = await prisma.productVariant.create({
 				data: {
 					...input,
-					type: input.type as any,
+					type: input.type,
 				},
 			});
 
@@ -427,9 +425,11 @@ export const productRouter = router({
 			// 재고 부족 알림 체크
 			if (product.stock <= product.minStock) {
 				// TODO: 재고 부족 알림 발송
-				console.log(`재고 부족 알림: ${product.name} (현재 재고: ${product.stock})`);
+				console.log(
+					`재고 부족 알림: ${product.name} (현재 재고: ${product.stock})`,
+				);
 			}
 
 			return product;
 		}),
-}); 
+});

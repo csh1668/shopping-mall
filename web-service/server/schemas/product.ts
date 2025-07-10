@@ -2,7 +2,10 @@ import { z } from "zod";
 
 // 상품 생성 스키마
 export const createProductSchema = z.object({
-	name: z.string().min(1, "상품명은 필수입니다.").max(200, "상품명은 200자 이하여야 합니다."),
+	name: z
+		.string()
+		.min(1, "상품명은 필수입니다.")
+		.max(200, "상품명은 200자 이하여야 합니다."),
 	slug: z.string().min(1).max(200).optional(), // 자동 생성 가능
 	description: z.string().min(1, "상품 설명은 필수입니다."),
 	shortDescription: z.string().max(500).optional(),
@@ -62,4 +65,6 @@ export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
 export type ListProductsInput = z.infer<typeof listProductsSchema>;
 export type ProductIdInput = z.infer<typeof productIdSchema>;
-export type CreateProductVariantInput = z.infer<typeof createProductVariantSchema>; 
+export type CreateProductVariantInput = z.infer<
+	typeof createProductVariantSchema
+>;

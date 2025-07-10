@@ -1,14 +1,17 @@
+import type { inferRouterOutputs } from "@trpc/server";
+import { Star } from "lucide-react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { vTrpc } from "@/server/client";
-import { sTrpc } from "@/server/server";
-import ProductClient from "./product-client"
-import RelatedProducts from "./related-products";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Star } from "lucide-react";
+import type { AppRouter } from "@/server/router";
+import { sTrpc } from "@/server/server";
+import ProductClient from "./product-client";
+import RelatedProducts from "./related-products";
+
+type RouterOutput = inferRouterOutputs<AppRouter>;
 
 export async function generateStaticParams() {
 	const products = await sTrpc.product.list.fetch({
@@ -22,29 +25,31 @@ export async function generateStaticParams() {
 	}));
 }
 
-export default async function ProductDetailPage({ 
-	params 
-}: { 
-	params: Promise<{ slug: string }>
+export default async function ProductDetailPage({
+	params,
+}: {
+	params: Promise<{ slug: string }>;
 }) {
 	const { slug } = await params;
-	let product;
-	
+	let product: RouterOutput["product"]["getBySlug"];
+
 	try {
 		product = await sTrpc.product.getBySlug.fetch({ slug });
-	} catch (error) {
+	} catch (_error) {
 		notFound();
 	}
 
 	// 할인율 계산
 	const discountRate = product.originalPrice
-		? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+		? Math.round(
+				((product.originalPrice - product.price) / product.originalPrice) * 100,
+			)
 		: 0;
 
 	// 평점 분포 (실제 데이터가 없으므로 임시)
-	const ratingDistribution = [
+	const _ratingDistribution = [
 		{ stars: 5, count: Math.floor(product.reviewCount * 0.69), percentage: 69 },
-		{ stars: 4, count: Math.floor(product.reviewCount * 0.20), percentage: 20 },
+		{ stars: 4, count: Math.floor(product.reviewCount * 0.2), percentage: 20 },
 		{ stars: 3, count: Math.floor(product.reviewCount * 0.07), percentage: 7 },
 		{ stars: 2, count: Math.floor(product.reviewCount * 0.03), percentage: 3 },
 		{ stars: 1, count: Math.floor(product.reviewCount * 0.01), percentage: 1 },
@@ -66,14 +71,14 @@ export default async function ProductDetailPage({
 					</div>
 					{product.images.length > 0 && (
 						<div className="grid grid-cols-4 gap-2">
-							{product.images.slice(0, 4).map((image, index) => (
+							{product.images.slice(0, 4).map((image) => (
 								<div
-									key={index}
+									key={image}
 									className="relative aspect-square overflow-hidden rounded-lg border-2 border-muted"
 								>
 									<Image
 										src={image || "/placeholder.svg"}
-										alt={`${product.name} ${index + 1}`}
+										alt={`${product.name} ${image}`}
 										fill
 										className="object-cover"
 									/>
@@ -84,10 +89,7 @@ export default async function ProductDetailPage({
 				</div>
 
 				{/* Product Info - Client Component */}
-				<ProductClient 
-					product={product} 
-					discountRate={discountRate}
-				/>
+				<ProductClient product={product} discountRate={discountRate} />
 			</div>
 
 			{/* Product Details Tabs */}
@@ -106,7 +108,7 @@ export default async function ProductDetailPage({
 							<CardContent className="p-8">
 								<h3 className="text-xl font-bold mb-6">상품 설명</h3>
 								<p className="whitespace-pre-wrap">{product.description}</p>
-								
+
 								{product.tags.length > 0 && (
 									<div className="mt-6">
 										<h4 className="font-medium mb-3">태그</h4>
@@ -131,9 +133,9 @@ export default async function ProductDetailPage({
 										<h3 className="text-xl font-bold mb-2">고객 리뷰</h3>
 										<div className="flex items-center gap-2">
 											<div className="flex">
-												{[...Array(5)].map((_, i) => (
+												{[...Array(5)].map((i) => (
 													<Star
-														key={i}
+														key={`rating-${product.id}-${i}`}
 														className={`h-5 w-5 ${
 															i < Math.floor(product.rating)
 																? "fill-yellow-400 text-yellow-400"
@@ -169,14 +171,16 @@ export default async function ProductDetailPage({
 																{review.user.fullName || "익명"}
 															</p>
 															<p className="text-sm text-muted-foreground">
-																{new Date(review.createdAt).toLocaleDateString()}
+																{new Date(
+																	review.createdAt,
+																).toLocaleDateString()}
 															</p>
 														</div>
 													</div>
 													<div className="flex">
-														{[...Array(5)].map((_, i) => (
+														{[...Array(5)].map((i) => (
 															<Star
-																key={i}
+																key={`rating-${review.id}-${i}`}
 																className={`h-4 w-4 ${
 																	i < review.rating
 																		? "fill-yellow-400 text-yellow-400"
@@ -189,7 +193,9 @@ export default async function ProductDetailPage({
 												{review.title && (
 													<h4 className="font-medium mb-2">{review.title}</h4>
 												)}
-												<p className="text-muted-foreground">{review.content}</p>
+												<p className="text-muted-foreground">
+													{review.content}
+												</p>
 											</div>
 										))}
 									</div>
@@ -251,9 +257,9 @@ export default async function ProductDetailPage({
 			</div>
 
 			{/* Related Products */}
-			<RelatedProducts 
-				categoryId={product.categoryId} 
-				currentProductId={product.id} 
+			<RelatedProducts
+				categoryId={product.categoryId}
+				currentProductId={product.id}
 			/>
 		</div>
 	);

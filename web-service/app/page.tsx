@@ -1,27 +1,31 @@
 import { Gift, TrendingUp, Zap } from "lucide-react";
 import Link from "next/link";
+import Categories from "@/app/components/Categories";
+import Products from "@/app/components/Products";
 import { AnimatedCard } from "@/components/ui/animated-card";
 import { Button } from "@/components/ui/button";
 import { sTrpc } from "@/server/server";
-import Products from "@/app/components/Products";
-import Categories from "@/app/components/Categories";
 
 export default async function HomePage() {
 	// 서버에서 데이터 미리 fetch - 병렬 처리로 성능 최적화
 	const [productsData, categoriesData] = await Promise.all([
-		sTrpc.product.list.fetch({
-			page: 1,
-			limit: 8,
-			isActive: true,
-			sortBy: "createdAt",
-			sortOrder: "desc",
-		}).catch(() => ({ 
-			products: [], 
-			pagination: { total: 0, page: 1, limit: 8, totalPages: 0 } 
-		})),
-		sTrpc.category.list.fetch({
-			isActive: true,
-		}).catch(() => []),
+		sTrpc.product.list
+			.fetch({
+				page: 1,
+				limit: 8,
+				isActive: true,
+				sortBy: "createdAt",
+				sortOrder: "desc",
+			})
+			.catch(() => ({
+				products: [],
+				pagination: { total: 0, page: 1, limit: 8, totalPages: 0 },
+			})),
+		sTrpc.category.list
+			.fetch({
+				isActive: true,
+			})
+			.catch(() => []),
 	]);
 
 	return (

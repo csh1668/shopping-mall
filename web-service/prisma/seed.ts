@@ -1,9 +1,9 @@
+import path from "node:path";
 import { PrismaClient } from "@prisma/client";
 import * as dotenv from "dotenv";
-import path from "path";
 
 // .env 파일 로드 (.env 파일 경로를 명시적으로 지정)
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const prisma = new PrismaClient();
 
@@ -70,14 +70,16 @@ async function main() {
 			data: {
 				name: "프리미엄 무선 이어폰",
 				slug: "premium-wireless-earbuds",
-				description: "최고급 노이즈 캔슬링 기능을 갖춘 프리미엄 무선 이어폰입니다.",
+				description:
+					"최고급 노이즈 캔슬링 기능을 갖춘 프리미엄 무선 이어폰입니다.",
 				shortDescription: "노이즈 캔슬링 무선 이어폰",
 				price: 129000,
 				originalPrice: 159000,
 				categoryId: categories[1].id, // 전자제품
 				brand: "TechPro",
 				sku: "TWE-001",
-				previewImage: "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800",
+				previewImage:
+					"https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800",
 				images: [
 					"https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800",
 				],
@@ -90,14 +92,16 @@ async function main() {
 			data: {
 				name: "스마트 워치 프로",
 				slug: "smart-watch-pro",
-				description: "건강 관리와 피트니스 추적을 위한 최고의 스마트 워치입니다.",
+				description:
+					"건강 관리와 피트니스 추적을 위한 최고의 스마트 워치입니다.",
 				shortDescription: "피트니스 스마트 워치",
 				price: 299000,
 				originalPrice: 349000,
 				categoryId: categories[1].id, // 전자제품
 				brand: "FitTech",
 				sku: "SWP-001",
-				previewImage: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800",
+				previewImage:
+					"https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800",
 				images: [
 					"https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800",
 				],
@@ -117,7 +121,8 @@ async function main() {
 				categoryId: categories[0].id, // 패션
 				brand: "Urban Style",
 				sku: "BAG-001",
-				previewImage: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800",
+				previewImage:
+					"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800",
 				images: [
 					"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=800",
 				],
@@ -130,14 +135,16 @@ async function main() {
 			data: {
 				name: "블루투스 스피커",
 				slug: "bluetooth-speaker",
-				description: "강력한 사운드와 긴 배터리 수명을 자랑하는 포터블 스피커입니다.",
+				description:
+					"강력한 사운드와 긴 배터리 수명을 자랑하는 포터블 스피커입니다.",
 				shortDescription: "포터블 블루투스 스피커",
 				price: 79000,
 				originalPrice: 99000,
 				categoryId: categories[1].id, // 전자제품
 				brand: "SoundMax",
 				sku: "SPK-001",
-				previewImage: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=800",
+				previewImage:
+					"https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=800",
 				images: [
 					"https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=800",
 				],
@@ -150,14 +157,16 @@ async function main() {
 			data: {
 				name: "한글 테스트 상품",
 				slug: encodeURIComponent("한글-테스트-상품"),
-				description: "한글 slug가 올바르게 작동하는지 테스트하기 위한 상품입니다.",
+				description:
+					"한글 slug가 올바르게 작동하는지 테스트하기 위한 상품입니다.",
 				shortDescription: "한글 slug 테스트",
 				price: 50000,
 				originalPrice: 60000,
 				categoryId: categories[0].id, // 패션
 				brand: "테스트 브랜드",
 				sku: "TEST-001",
-				previewImage: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800",
+				previewImage:
+					"https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800",
 				images: [
 					"https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800",
 				],
@@ -180,4 +189,4 @@ main()
 	})
 	.finally(async () => {
 		await prisma.$disconnect();
-	}); 
+	});

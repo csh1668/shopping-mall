@@ -50,10 +50,12 @@ export const categoryRouter = router({
 	// 카테고리 목록 조회 (공개)
 	list: publicProcedure
 		.input(
-			z.object({
-				parentId: z.string().optional().nullable(),
-				isActive: z.boolean().optional(),
-			}).optional(),
+			z
+				.object({
+					parentId: z.string().optional().nullable(),
+					isActive: z.boolean().optional(),
+				})
+				.optional(),
 		)
 		.query(async ({ input }) => {
 			const where = {
@@ -66,7 +68,10 @@ export const categoryRouter = router({
 				include: {
 					parent: true,
 					children: {
-						where: input?.isActive !== undefined ? { isActive: input.isActive } : undefined,
+						where:
+							input?.isActive !== undefined
+								? { isActive: input.isActive }
+								: undefined,
 					},
 					_count: {
 						select: {
@@ -74,10 +79,7 @@ export const categoryRouter = router({
 						},
 					},
 				},
-				orderBy: [
-					{ sortOrder: "asc" },
-					{ name: "asc" },
-				],
+				orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
 			});
 
 			return categories.map((category) => ({
@@ -104,61 +106,58 @@ export const categoryRouter = router({
 					},
 				},
 			},
-			orderBy: [
-				{ sortOrder: "asc" },
-				{ name: "asc" },
-			],
+			orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
 		});
 
 		return rootCategories;
 	}),
 
 	// 카테고리 생성 (관리자 전용)
-	create: adminProcedure
-		.input(categorySchema)
-		.mutation(async ({ input }) => {
-			// slug 자동 생성
-			const slug = input.slug || encodeURIComponent(
+	create: adminProcedure.input(categorySchema).mutation(async ({ input }) => {
+		// slug 자동 생성
+		const slug =
+			input.slug ||
+			encodeURIComponent(
 				input.name
 					.replace(/\s+/g, "-") // 띄어쓰기를 하이픈으로 변경
-					.replace(/(^-|-$)/g, "") // 시작과 끝의 하이픈 제거
+					.replace(/(^-|-$)/g, ""), // 시작과 끝의 하이픈 제거
 			);
 
-			// 중복 체크
-			const existing = await prisma.category.findUnique({
-				where: { slug },
+		// 중복 체크
+		const existing = await prisma.category.findUnique({
+			where: { slug },
+		});
+
+		if (existing) {
+			throw new TRPCError({
+				code: "CONFLICT",
+				message: "이미 존재하는 카테고리 URL입니다.",
+			});
+		}
+
+		// 부모 카테고리 확인
+		if (input.parentId) {
+			const parent = await prisma.category.findUnique({
+				where: { id: input.parentId },
 			});
 
-			if (existing) {
+			if (!parent) {
 				throw new TRPCError({
-					code: "CONFLICT",
-					message: "이미 존재하는 카테고리 URL입니다.",
+					code: "NOT_FOUND",
+					message: "상위 카테고리를 찾을 수 없습니다.",
 				});
 			}
+		}
 
-			// 부모 카테고리 확인
-			if (input.parentId) {
-				const parent = await prisma.category.findUnique({
-					where: { id: input.parentId },
-				});
+		const category = await prisma.category.create({
+			data: {
+				...input,
+				slug,
+			},
+		});
 
-				if (!parent) {
-					throw new TRPCError({
-						code: "NOT_FOUND",
-						message: "상위 카테고리를 찾을 수 없습니다.",
-					});
-				}
-			}
-
-			const category = await prisma.category.create({
-				data: {
-					...input,
-					slug,
-				},
-			});
-
-			return category;
-		}),
+		return category;
+	}),
 
 	// 카테고리 수정 (관리자 전용)
 	update: adminProcedure
@@ -254,4 +253,4 @@ export const categoryRouter = router({
 
 			return { success: true, message: "카테고리가 삭제되었습니다." };
 		}),
-}); 
+});

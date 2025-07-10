@@ -1,8 +1,8 @@
 import { router } from "./index";
-import { exampleRouter } from "./routers/example";
-import { userRouter } from "./routers/user";
-import { productRouter } from "./routers/product";
 import { categoryRouter } from "./routers/category";
+import { exampleRouter } from "./routers/example";
+import { productRouter } from "./routers/product";
+import { userRouter } from "./routers/user";
 
 export const appRouter = router({
 	example: exampleRouter,

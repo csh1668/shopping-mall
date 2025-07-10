@@ -1,6 +1,6 @@
 "use client";
 
-import { Gift, Heart, ShoppingCart, Star, TrendingUp, Zap } from "lucide-react";
+import { Heart, ShoppingCart, Star, TrendingUp, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -11,6 +11,7 @@ import { CardContent } from "@/components/ui/card";
 
 interface ProductsProps {
 	data: {
+		// biome-ignore lint/suspicious/noExplicitAny: 실제 타입은 tRPC에서 자동 생성됨
 		products: any[];
 		pagination: {
 			total: number;
@@ -22,7 +23,6 @@ interface ProductsProps {
 }
 
 export default function Products({ data }: ProductsProps) {
-
 	if (!data || data.products.length === 0) {
 		return (
 			<div className="text-center py-8">
@@ -41,6 +41,7 @@ export default function Products({ data }: ProductsProps) {
 }
 
 interface ProductCardProps {
+	// biome-ignore lint/suspicious/noExplicitAny: 실제 타입은 tRPC에서 자동 생성됨
 	product: any;
 	index: number;
 }
@@ -49,7 +50,9 @@ function ProductCard({ product, index }: ProductCardProps) {
 	const [isWishlisted, setIsWishlisted] = useState(false);
 
 	const discountRate = product.originalPrice
-		? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+		? Math.round(
+				((product.originalPrice - product.price) / product.originalPrice) * 100,
+			)
 		: 0;
 
 	return (
@@ -120,7 +123,9 @@ function ProductCard({ product, index }: ProductCardProps) {
 								{product.name}
 							</h3>
 						</Link>
-						<p className="text-xs text-muted-foreground">{product.category.name}</p>
+						<p className="text-xs text-muted-foreground">
+							{product.category.name}
+						</p>
 					</div>
 
 					<div className="flex items-center justify-between">
@@ -129,17 +134,18 @@ function ProductCard({ product, index }: ProductCardProps) {
 								<span className="font-bold text-lg">
 									{product.price.toLocaleString()}원
 								</span>
-								{product.originalPrice && product.originalPrice > product.price && (
-									<span className="text-sm text-muted-foreground line-through">
-										{product.originalPrice.toLocaleString()}원
-									</span>
-								)}
+								{product.originalPrice &&
+									product.originalPrice > product.price && (
+										<span className="text-sm text-muted-foreground line-through">
+											{product.originalPrice.toLocaleString()}원
+										</span>
+									)}
 							</div>
 							<div className="flex items-center gap-1">
 								<div className="flex">
-									{[...Array(5)].map((_, i) => (
+									{[...Array(5)].map((i) => (
 										<Star
-											key={i}
+											key={`rating-${product.id}-${i}`}
 											className={`h-3 w-3 ${
 												i < Math.floor(product.averageRating)
 													? "fill-yellow-400 text-yellow-400"
@@ -163,4 +169,4 @@ function ProductCard({ product, index }: ProductCardProps) {
 			</CardContent>
 		</AnimatedCard>
 	);
-} 
+}

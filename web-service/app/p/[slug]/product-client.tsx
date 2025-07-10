@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
 	Heart,
 	Minus,
@@ -12,18 +11,23 @@ import {
 	Star,
 	Truck,
 } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 interface ProductClientProps {
-	product: any; // 실제 타입은 tRPC에서 자동 생성됨
+	// biome-ignore lint/suspicious/noExplicitAny: 실제 타입은 tRPC에서 자동 생성됨
+	product: any;
 	discountRate: number;
 }
 
-export default function ProductClient({ product, discountRate }: ProductClientProps) {
+export default function ProductClient({
+	product,
+	discountRate,
+}: ProductClientProps) {
 	const [quantity, setQuantity] = useState(1);
 	const [isWishlisted, setIsWishlisted] = useState(false);
-	
+
 	// 임시 색상 및 사이즈 데이터 (실제로는 productVariants 사용)
 	const colors = [
 		{ name: "블랙", value: "black", hex: "#000000" },
@@ -31,7 +35,7 @@ export default function ProductClient({ product, discountRate }: ProductClientPr
 		{ name: "실버", value: "silver", hex: "#C0C0C0" },
 	];
 	const sizes = ["S", "M", "L", "XL"];
-	
+
 	const [selectedColor, setSelectedColor] = useState(colors[0]);
 	const [selectedSize, setSelectedSize] = useState(sizes[0]);
 
@@ -59,15 +63,13 @@ export default function ProductClient({ product, discountRate }: ProductClientPr
 	return (
 		<div className="space-y-6">
 			<div>
-				<h1 className="text-2xl lg:text-3xl font-bold mb-2">
-					{product.name}
-				</h1>
+				<h1 className="text-2xl lg:text-3xl font-bold mb-2">{product.name}</h1>
 				<div className="flex items-center gap-4 mb-4">
 					<div className="flex items-center gap-1">
 						<div className="flex">
-							{[...Array(5)].map((_, i) => (
+							{[...Array(5)].map((i) => (
 								<Star
-									key={i}
+									key={`rating-${product.id}-${i}`}
 									className={`h-4 w-4 ${
 										i < Math.floor(product.rating)
 											? "fill-yellow-400 text-yellow-400"
@@ -110,7 +112,9 @@ export default function ProductClient({ product, discountRate }: ProductClientPr
 			</div>
 
 			{/* Variants - 실제로는 productVariants 데이터 사용 */}
-			{product.productVariants.some((v: any) => v.type === "COLOR") && (
+			{product.productVariants.some(
+				(v: { type: string }) => v.type === "COLOR",
+			) && (
 				<div className="space-y-3">
 					<h3 className="font-medium">색상: {selectedColor.name}</h3>
 					<div className="flex gap-2">
@@ -132,7 +136,9 @@ export default function ProductClient({ product, discountRate }: ProductClientPr
 				</div>
 			)}
 
-			{product.productVariants.some((v: any) => v.type === "SIZE") && (
+			{product.productVariants.some(
+				(v: { type: string }) => v.type === "SIZE",
+			) && (
 				<div className="space-y-3">
 					<h3 className="font-medium">사이즈: {selectedSize}</h3>
 					<div className="flex gap-2">
@@ -235,4 +241,4 @@ export default function ProductClient({ product, discountRate }: ProductClientPr
 			</div>
 		</div>
 	);
-} 
+}

@@ -1,9 +1,9 @@
+import type { inferRouterOutputs } from "@trpc/server";
 import { notFound } from "next/navigation";
 import { vTrpc } from "@/server/client";
+import type { AppRouter } from "@/server/router";
 import { sTrpc } from "@/server/server";
 import CategoryClient from "./category-client";
-import type { AppRouter } from "@/server/router";
-import type { inferRouterOutputs } from "@trpc/server";
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
 
@@ -41,12 +41,15 @@ export async function generateStaticParams() {
 	}
 }
 
-export default async function CategoryPage({ params, searchParams }: PageProps) {
+export default async function CategoryPage({
+	params,
+	searchParams,
+}: PageProps) {
 	const { category } = await params;
 	const searchParamsData = await searchParams;
-	
+
 	// 카테고리 정보 가져오기 (동적 처리)
-	type CategoryData = RouterOutput['category']['getBySlug'];
+	type CategoryData = RouterOutput["category"]["getBySlug"];
 	let categoryData: CategoryData | null = null;
 	let categoryName = "전체"; // 기본값
 
@@ -54,7 +57,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
 		try {
 			categoryData = await vTrpc.category.getBySlug.query({ slug: category });
 			categoryName = categoryData.name;
-		} catch (error) {
+		} catch (_error) {
 			notFound();
 		}
 	}
@@ -63,18 +66,22 @@ export default async function CategoryPage({ params, searchParams }: PageProps) 
 	const page = Number(searchParamsData.page) || 1;
 	const limit = 20;
 	const sortBy = searchParamsData.sort || "createdAt";
-	const minPrice = searchParamsData.minPrice ? Number(searchParamsData.minPrice) : undefined;
-	const maxPrice = searchParamsData.maxPrice ? Number(searchParamsData.maxPrice) : undefined;
+	const minPrice = searchParamsData.minPrice
+		? Number(searchParamsData.minPrice)
+		: undefined;
+	const maxPrice = searchParamsData.maxPrice
+		? Number(searchParamsData.maxPrice)
+		: undefined;
 	const search = searchParamsData.search || "";
 
 	// 상품 목록 가져오기
-	type ProductListResult = RouterOutput['product']['list'];
-	
+	type ProductListResult = RouterOutput["product"]["list"];
+
 	let productListResult: ProductListResult = {
 		products: [],
-		pagination: { total: 0, page: 1, limit: 20, totalPages: 0 }
+		pagination: { total: 0, page: 1, limit: 20, totalPages: 0 },
 	};
-	
+
 	try {
 		productListResult = await vTrpc.product.list.query({
 			page,
