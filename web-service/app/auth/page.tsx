@@ -17,8 +17,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FormField } from "@/components/ui/form-field";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { SocialButton } from "@/components/ui/social-button";
+import { createLogger } from "@/lib/logger";
 import { useAuthStore } from "@/stores/auth-store";
-import { createLogger } from "@/utils/logger";
 
 const _logger = createLogger("AuthPage");
 

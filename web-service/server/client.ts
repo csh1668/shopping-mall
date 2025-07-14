@@ -3,8 +3,8 @@ import {
 	createTRPCReact,
 	httpBatchLink,
 } from "@trpc/react-query";
+import { createLogger } from "@/lib/logger";
 import { supabase } from "@/lib/supabase-client";
-import { createLogger } from "@/utils/logger";
 import type { AppRouter } from "./router";
 
 const logger = createLogger("tRPC-Client");
