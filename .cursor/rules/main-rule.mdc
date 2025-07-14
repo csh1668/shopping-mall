@@ -1,0 +1,178 @@
+---
+alwaysApply: true
+---
+
+# 쇼핑몰 프로젝트 개발 가이드
+
+## Golden rules
+- 프로젝트와 관련해서 확신이 서지 않는 경우, 변경하기 전에 개발자에게 설명을 요청하세요.
+- 요청 사항에 대한 구체적인 설명이 필요할 경우 개발자에게 추가 설명을 요청하세요.
+
+## 기술 스택 & 아키텍처
+
+이 프로젝트는 현대적인 풀스택 쇼핑몰로 다음 기술들을 사용합니다:
+
+### 프론트엔드
+- **Next.js 15** (App Router) - [next.config.mjs](mdc:web-service/next.config.mjs)
+- **React 19** 
+- **TypeScript** - 엄격한 타입 안정성 - [tsconfig.json](mdc:web-service/tsconfig.json)
+- **Tailwind CSS + shadcn/ui** - 모던 UI 컴포넌트 - [components.json](mdc:web-service/components.json)
+- **Zustand** - 클라이언트 상태 관리
+
+### 백엔드 & 데이터베이스
+- **tRPC** - 타입 안전한 API - [server/router.ts](mdc:web-service/server/router.ts)
+- **Prisma ORM** - 데이터베이스 스키마 - [prisma/schema.prisma](mdc:web-service/prisma/schema.prisma)
+- **Supabase** - PostgreSQL + 인증 - [lib/supabase-client.ts](mdc:web-service/lib/supabase-client.ts)
+
+### 개발 도구
+- **Biome** - 린팅 & 포맷팅
+- **Lefthook** - Git 훅 관리
+
+## 폴더 구조 & 파일 네이밍
+
+### 주요 디렉토리
+```
+web-service/
+├── app/                # Next.js App Router
+├── components/         # 재사용 가능한 컴포넌트
+│   ├── ui/             # shadcn/ui 컴포넌트
+│   ├── layout/         # 레이아웃 컴포넌트
+│   └── providers/      # Context Providers
+├── server/             # tRPC 서버 로직
+│   └── routers/        # 도메인별 라우터
+├── lib/                # 유틸리티 & 설정
+├── hooks/              # 커스텀 React 훅
+└── prisma/             # 데이터베이스 스키마 & 시드
+```
+
+### 네이밍 컨벤션
+- **파일명**: kebab-case (예: `user-profile.tsx`)
+- **컴포넌트**: PascalCase (예: `UserProfile`)
+- **변수/함수**: camelCase (예: `getUserData`)
+- **상수**: SCREAMING_SNAKE_CASE (예: `API_BASE_URL`)
+- **타입/인터페이스**: PascalCase (예: `ProductData`)
+
+## 코딩 패턴 & 베스트 프랙티스
+
+### 1. tRPC 패턴
+```typescript
+// 새로운 라우터 생성시 server/routers/ 디렉토리에
+export const productRouter = router({
+  list: publicProcedure.input(listSchema).query(async ({ input }) => {
+    // 로직 구현
+  }),
+  create: adminProcedure.input(createSchema).mutation(async ({ input }) => {
+    // 로직 구현
+  }),
+});
+
+// 클라이언트에서 사용
+const { data } = trpc.product.list.useQuery({ page: 1 });
+```
+
+### 2. Prisma 패턴
+```typescript
+// include를 사용한 관계 포함
+const products = await prisma.product.findMany({
+  include: {
+    category: { select: { id: true, name: true } },
+    _count: { select: { reviews: true } }
+  }
+});
+
+// where 조건 동적 구성
+const where = {
+  ...(search && { name: { contains: search, mode: "insensitive" } }),
+  ...(isActive !== undefined && { isActive }),
+};
+```
+
+### 3. 컴포넌트 패턴
+```typescript
+// 서버 컴포넌트에서 데이터 fetch
+export default async function ProductPage() {
+  const products = await sTrpc.product.list.fetch({ limit: 10 });
+  return <ProductList products={products} />;
+}
+
+// 클라이언트 컴포넌트에서 tRPC 사용
+"use client";
+export function ProductForm() {
+  const createProduct = trpc.product.create.useMutation();
+  // ...
+}
+
+// 클라이언트 컴포넌트에서 hook 없이 tRPC 사용
+"use client";
+// ...
+await vTrpc.product.getBySlug.query({ slug: "test" });
+```
+
+### 4. 스키마 검증
+```typescript
+// server/schemas/ 디렉토리에 Zod 스키마 정의
+export const createProductSchema = z.object({
+  name: z.string().min(1),
+  price: z.number().positive(),
+  categoryId: z.string().cuid(),
+});
+```
+
+## 중요한 규칙들
+
+### 1. 파일 임포트 순서
+```typescript
+// 1. React/Next.js
+import { useState } from "react";
+import Link from "next/link";
+
+// 2. 외부 라이브러리
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+
+// 3. 내부 모듈 (@/ 경로 사용)
+import { trpc } from "@/server/client";
+import { prisma } from "@/lib/prisma";
+```
+
+### 2. 타입 안정성
+- 모든 API 엔드포인트는 tRPC로 타입 안전하게 구현
+- Prisma 스키마 변경시 반드시 `npx prisma generate` 실행
+- 컴포넌트 props는 명시적으로 타입 정의
+
+### 3. 데이터베이스 접근
+- 직접 Prisma 접근은 서버 컴포넌트와 tRPC 라우터에서만
+- 클라이언트에서는 반드시 tRPC를 통해 데이터 접근
+- 트랜잭션이 필요한 경우 Prisma의 `$transaction` 사용
+- prisma/schema.prisma를 확인하여 타입 스키마 확인
+
+### 4. 인증 & 권한
+- 인증이 필요한 라우터는 `protectedProcedure` 사용
+- 관리자 권한이 필요한 경우 `adminProcedure` 사용
+- Supabase auth와 Prisma UserMetadata 연동 활용
+
+### 5. UI/UX 패턴
+- shadcn/ui 컴포넌트 우선 사용
+- 일관된 로딩 상태 및 에러 핸들링
+- 반응형 디자인 (Tailwind breakpoints 활용)
+- 다크모드 지원 (`next-themes` 사용)
+- 아이콘은 components/lucide-icon.tsx 사용
+
+### 6. 성능 최적화
+- 서버 컴포넌트에서 데이터 프리패칭
+- 클라이언트 컴포넌트는 필요시에만 사용
+- 이미지 최적화 (Next.js Image 컴포넌트)
+- 적절한 캐싱 전략 적용
+
+### 7. 기타
+- utils/logger.ts 로깅 시 활용 (파일 첫 줄에 createLogger('이름') 사용)
+- process.env 대신 타입 안정성을 보장하는 public-env.ts, server-env.ts 활용
+
+## 새로운 기능 개발시
+
+1. **스키마 먼저**: Prisma 스키마와 Zod 검증 스키마 정의
+2. **tRPC 라우터**: 서버 로직을 tRPC 라우터로 구현
+3. **컴포넌트**: 재사용 가능한 컴포넌트로 UI 구현
+4. **테스트**: 핵심 로직에 대한 테스트 작성
+
+영리함보단 유지보수 가능성을 더 우선하세요.
