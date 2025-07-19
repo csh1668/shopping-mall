@@ -309,7 +309,7 @@ export default function CategoryClient({
 							</Button>
 
 							{[...Array(Math.min(5, pagination.totalPages)).keys()].map(
-								(_, i) => {
+								(i) => {
 									const pageNum = i + 1;
 									return (
 										<Button
