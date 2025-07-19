@@ -22,8 +22,7 @@ export default function ProductLoading() {
 					<div className="space-y-4">
 						<Skeleton className="aspect-square w-full rounded-lg" />
 						<div className="grid grid-cols-4 gap-2">
-							{[...Array(4)].map((_, i) => (
-								// biome-ignore lint/suspicious/noArrayIndexKey: 임시
+							{[...Array(4).keys()].map((i) => (
 								<Skeleton key={i} className="aspect-square rounded-lg" />
 							))}
 						</div>
@@ -54,8 +53,7 @@ export default function ProductLoading() {
 							<div className="space-y-2">
 								<Skeleton className="h-4 w-16" />
 								<div className="flex gap-2">
-									{[...Array(3)].map((_, i) => (
-										// biome-ignore lint/suspicious/noArrayIndexKey: 임시
+									{[...Array(3).keys()].map((i) => (
 										<Skeleton key={i} className="w-10 h-10 rounded-full" />
 									))}
 								</div>
@@ -64,8 +62,7 @@ export default function ProductLoading() {
 							<div className="space-y-2">
 								<Skeleton className="h-4 w-16" />
 								<div className="flex gap-2">
-									{[...Array(4)].map((_, i) => (
-										// biome-ignore lint/suspicious/noArrayIndexKey: 임시
+									{[...Array(4).keys()].map((i) => (
 										<Skeleton key={i} className="h-8 w-12 rounded" />
 									))}
 								</div>

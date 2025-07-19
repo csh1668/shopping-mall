@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type React from "react";
 import { useEffect } from "react";
-import { useAuthStore } from "@/stores/auth-store";
+import { useAuth } from "@/hooks/use-auth";
 
 interface AuthGuardProps {
 	children: React.ReactNode;
@@ -17,7 +17,7 @@ export function AuthGuard({
 	requireAuth = true,
 	redirectTo = "/auth",
 }: AuthGuardProps) {
-	const { user, loading, init } = useAuthStore();
+	const { user, loading, init } = useAuth();
 	const router = useRouter();
 
 	useEffect(() => {

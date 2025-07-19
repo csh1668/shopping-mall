@@ -1,11 +1,20 @@
 import { useEffect } from "react";
-import { useAuthStore } from "@/stores/auth-store";
+import { useAuth } from "@/hooks/use-auth";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-	const { init } = useAuthStore();
+	const { init } = useAuth();
 
 	useEffect(() => {
-		init();
+		const cleanup = init();
+
+		// cleanup 함수가 반환되면 useEffect cleanup에서 호출
+		return () => {
+			if (cleanup) {
+				cleanup.then((cleanupFn) => {
+					if (cleanupFn) cleanupFn();
+				});
+			}
+		};
 	}, [init]);
 
 	return <>{children}</>;

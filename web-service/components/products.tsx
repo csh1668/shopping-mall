@@ -1,9 +1,8 @@
 "use client";
-
-import { Heart, ShoppingCart, Star, TrendingUp, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import LucideIcon from "@/components/lucide-icon";
 import { AnimatedCard } from "@/components/ui/animated-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { CardContent } from "@/components/ui/card";
 
 interface ProductsProps {
 	data: {
+		// TODO: 타입 올바르게
 		// biome-ignore lint/suspicious/noExplicitAny: 실제 타입은 tRPC에서 자동 생성됨
 		products: any[];
 		pagination: {
@@ -86,7 +86,8 @@ function ProductCard({ product, index }: ProductCardProps) {
 						className="absolute top-2 right-2 h-8 w-8 p-0 bg-white/80 hover:bg-white"
 						onClick={() => setIsWishlisted(!isWishlisted)}
 					>
-						<Heart
+						<LucideIcon
+							name="Heart"
 							className={`h-4 w-4 ${
 								isWishlisted ? "fill-red-500 text-red-500" : "text-gray-600"
 							}`}
@@ -97,19 +98,19 @@ function ProductCard({ product, index }: ProductCardProps) {
 					<div className="absolute bottom-2 left-2 flex gap-1">
 						{product.isFeatured && (
 							<Badge variant="secondary" className="text-xs">
-								<Star className="h-3 w-3 mr-1" />
+								<LucideIcon name="Star" className="h-3 w-3 mr-1" />
 								추천
 							</Badge>
 						)}
 						{product.isNew && (
 							<Badge className="text-xs bg-green-500 hover:bg-green-600">
-								<Zap className="h-3 w-3 mr-1" />
+								<LucideIcon name="Zap" className="h-3 w-3 mr-1" />
 								NEW
 							</Badge>
 						)}
 						{product.isBestseller && (
 							<Badge className="text-xs bg-orange-500 hover:bg-orange-600">
-								<TrendingUp className="h-3 w-3 mr-1" />
+								<LucideIcon name="TrendingUp" className="h-3 w-3 mr-1" />
 								베스트
 							</Badge>
 						)}
@@ -143,11 +144,12 @@ function ProductCard({ product, index }: ProductCardProps) {
 							</div>
 							<div className="flex items-center gap-1">
 								<div className="flex">
-									{[...Array(5)].map((i) => (
-										<Star
-											key={`rating-${product.id}-${i}`}
+									{[...Array(5).keys()].map((starIndex) => (
+										<LucideIcon
+											key={`rating-${product.id}-${starIndex}`}
+											name="Star"
 											className={`h-3 w-3 ${
-												i < Math.floor(product.averageRating)
+												starIndex < Math.floor(product.averageRating)
 													? "fill-yellow-400 text-yellow-400"
 													: "text-gray-300"
 											}`}
@@ -162,7 +164,7 @@ function ProductCard({ product, index }: ProductCardProps) {
 					</div>
 
 					<Button className="w-full" size="sm">
-						<ShoppingCart className="h-4 w-4 mr-2" />
+						<LucideIcon name="ShoppingCart" className="h-4 w-4 mr-2" />
 						장바구니
 					</Button>
 				</div>

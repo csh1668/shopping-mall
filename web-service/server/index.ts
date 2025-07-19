@@ -1,6 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { prisma } from "@/lib/prisma";
 import type { Context } from "./context";
 
 const t = initTRPC.context<Context>().create({
@@ -40,7 +41,7 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
 });
 
 // 관리자 권한 체크 미들웨어
-const enforceUserIsAdmin = t.middleware(({ ctx, next }) => {
+const enforceUserIsAdmin = t.middleware(async ({ ctx, next }) => {
 	if (!ctx.isAuthenticated || !ctx.user) {
 		throw new TRPCError({
 			code: "UNAUTHORIZED",
@@ -48,13 +49,28 @@ const enforceUserIsAdmin = t.middleware(({ ctx, next }) => {
 		});
 	}
 
-	// 관리자 권한 체크는 나중에 UserMetadata에서 role을 확인
-	// 지금은 임시로 통과시킴 (TODO: Prisma에서 role 체크)
-	return next({
-		ctx: {
-			...ctx,
-			user: ctx.user as User,
+	const user = ctx.user as User;
+	const userMetadata = await prisma.userMetadata.findUnique({
+		where: {
+			id: user.id,
 		},
+		select: {
+			role: true,
+		},
+	});
+
+	if (userMetadata?.role?.includes("ADMIN")) {
+		return next({
+			ctx: {
+				...ctx,
+				user,
+			},
+		});
+	}
+
+	throw new TRPCError({
+		code: "FORBIDDEN",
+		message: "관리자 권한이 필요합니다.",
 	});
 });
 
