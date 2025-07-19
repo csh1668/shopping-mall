@@ -133,7 +133,7 @@ export default async function ProductDetailPage({
 										<h3 className="text-xl font-bold mb-2">고객 리뷰</h3>
 										<div className="flex items-center gap-2">
 											<div className="flex">
-												{[...Array(5)].map((i) => (
+												{[...Array(5).keys()].map((i) => (
 													<Star
 														key={`rating-${product.id}-${i}`}
 														className={`h-5 w-5 ${
@@ -178,7 +178,7 @@ export default async function ProductDetailPage({
 														</div>
 													</div>
 													<div className="flex">
-														{[...Array(5)].map((i) => (
+														{[...Array(5).keys()].map((i) => (
 															<Star
 																key={`rating-${review.id}-${i}`}
 																className={`h-4 w-4 ${

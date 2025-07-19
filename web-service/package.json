@@ -3,12 +3,12 @@
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"build": "npx prisma generate && next build",
+		"build": "prisma generate && next build",
 		"dev": "next dev --turbo",
 		"lint": "biome check --write --unsafe .",
 		"start": "next start",
-		"postinstall": "npx prisma generate && npx lefthook install",
-		"db:seed": "npx prisma db seed"
+		"postinstall": "prisma generate && lefthook install",
+		"db:seed": "prisma db seed"
 	},
 	"dependencies": {
 		"@hookform/resolvers": "^3.10.0",
@@ -54,6 +54,7 @@
 		"date-fns": "^3.6.0",
 		"dotenv": "^17.0.0",
 		"embla-carousel-react": "8.5.1",
+		"framer-motion": "^12.23.6",
 		"immer": "latest",
 		"input-otp": "1.4.1",
 		"lucide-react": "^0.454.0",

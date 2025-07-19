@@ -308,21 +308,23 @@ export default function CategoryClient({
 								이전
 							</Button>
 
-							{[...Array(Math.min(5, pagination.totalPages))].map((_, i) => {
-								const pageNum = i + 1;
-								return (
-									<Button
-										key={pageNum}
-										variant={
-											pageNum === pagination.page ? "default" : "outline"
-										}
-										size="sm"
-										onClick={() => updateFilters({ page: pageNum })}
-									>
-										{pageNum}
-									</Button>
-								);
-							})}
+							{[...Array(Math.min(5, pagination.totalPages)).keys()].map(
+								(_, i) => {
+									const pageNum = i + 1;
+									return (
+										<Button
+											key={pageNum}
+											variant={
+												pageNum === pagination.page ? "default" : "outline"
+											}
+											size="sm"
+											onClick={() => updateFilters({ page: pageNum })}
+										>
+											{pageNum}
+										</Button>
+									);
+								},
+							)}
 
 							<Button
 								variant="outline"
@@ -404,7 +406,7 @@ function ProductCard({
 							</div>
 							<div className="flex items-center gap-1">
 								<div className="flex">
-									{[...Array(5)].map((i) => (
+									{[...Array(5).keys()].map((i) => (
 										<Star
 											key={`rating-${product.id}-${i}`}
 											className={`h-3 w-3 ${

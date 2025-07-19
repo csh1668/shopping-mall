@@ -1,26 +1,16 @@
 "use client";
 
-import {
-	ArrowLeft,
-	Heart,
-	Minus,
-	Plus,
-	ShoppingBag,
-	Tag,
-	Trash2,
-} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import LucideIcon from "@/components/lucide-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useCartStore } from "@/stores/cart-store";
 
-// import { useCartStore } from "@/lib/stores/cart-store"
-
-// 추천 상품 데이터
 const recommendedProducts = [
 	{
 		id: 11,
@@ -30,6 +20,7 @@ const recommendedProducts = [
 		image: "/placeholder.svg?height=200&width=200",
 		rating: 4.5,
 		brand: "ChargeTech",
+		inStock: true,
 	},
 	{
 		id: 12,
@@ -39,6 +30,7 @@ const recommendedProducts = [
 		image: "/placeholder.svg?height=200&width=200",
 		rating: 4.3,
 		brand: "ProtectPro",
+		inStock: true,
 	},
 	{
 		id: 13,
@@ -48,39 +40,20 @@ const recommendedProducts = [
 		image: "/placeholder.svg?height=200&width=200",
 		rating: 4.7,
 		brand: "TypeMaster",
+		inStock: true,
 	},
 ];
 
 export default function CartPage() {
-	// const { items, updateQuantity, removeItem, clearCart, getTotalPrice, getOriginalTotalPrice, addItem } = useCartStore()
-	// dummy values for testing
-	const items = [
-		{
-			id: 1,
-			name: "상품 1",
-			price: 10000,
-			quantity: 1,
-		},
-	];
-	const updateQuantity = (id: number, quantity: number) => {
-		console.log(`updateQuantity: ${id}, ${quantity}`);
-	};
-	const removeItem = (id: number) => {
-		console.log(`removeItem: ${id}`);
-	};
-	const clearCart = () => {
-		console.log(`clearCart`);
-	};
-	const getTotalPrice = () => {
-		return 0;
-	};
-	const getOriginalTotalPrice = () => {
-		return 0;
-	};
-	// biome-ignore lint/suspicious/noExplicitAny: 임시
-	const addItem = (item: any) => {
-		console.log(`addItem: ${item}`);
-	};
+	const {
+		items,
+		updateQuantity,
+		removeItem,
+		clearCart,
+		getTotalPrice,
+		getOriginalTotalPrice,
+		addItem,
+	} = useCartStore();
 
 	const [selectedItems, setSelectedItems] = useState<number[]>(
 		items.map((item) => item.id),
@@ -93,7 +66,7 @@ export default function CartPage() {
 
 	const totalPrice = getTotalPrice();
 	const originalTotalPrice = getOriginalTotalPrice();
-	const _totalSavings = originalTotalPrice - totalPrice;
+	const totalSavings = originalTotalPrice - totalPrice;
 
 	// 선택된 아이템들의 총 가격
 	const selectedTotalPrice = items
@@ -148,14 +121,17 @@ export default function CartPage() {
 			<div className="min-h-screen bg-background">
 				<div className="container px-4 py-8">
 					<div className="max-w-2xl mx-auto text-center">
-						<ShoppingBag className="h-16 w-16 mx-auto mb-6 text-muted-foreground" />
+						<LucideIcon
+							name="ShoppingBag"
+							className="h-16 w-16 mx-auto mb-6 text-muted-foreground"
+						/>
 						<h1 className="text-2xl font-bold mb-4">장바구니가 비어있습니다</h1>
 						<p className="text-muted-foreground mb-8">
 							원하는 상품을 담아보세요!
 						</p>
 						<Link href="/">
 							<Button size="lg">
-								<ArrowLeft className="mr-2 h-4 w-4" />
+								<LucideIcon name="ArrowLeft" className="mr-2 h-4 w-4" />
 								쇼핑 계속하기
 							</Button>
 						</Link>
@@ -172,7 +148,7 @@ export default function CartPage() {
 				<div className="flex items-center gap-4 mb-8">
 					<Link href="/">
 						<Button variant="ghost" size="icon">
-							<ArrowLeft className="h-4 w-4" />
+							<LucideIcon name="ArrowLeft" className="h-4 w-4" />
 						</Button>
 					</Link>
 					<h1 className="text-2xl font-bold">장바구니</h1>
@@ -199,7 +175,7 @@ export default function CartPage() {
 										</label>
 									</div>
 									<Button variant="ghost" size="sm" onClick={clearCart}>
-										<Trash2 className="h-4 w-4 mr-2" />
+										<LucideIcon name="Trash2" className="h-4 w-4 mr-2" />
 										전체삭제
 									</Button>
 								</div>
@@ -209,7 +185,9 @@ export default function CartPage() {
 						{/* Cart Items List */}
 						<div className="space-y-4">
 							{items.map((item) => (
-								<Card key={`${item.id}`}>
+								<Card
+									key={`${item.id}-${item.selectedColor}-${item.selectedSize}`}
+								>
 									<CardContent className="p-6">
 										<div className="flex gap-4">
 											<Checkbox
@@ -221,7 +199,9 @@ export default function CartPage() {
 
 											<div className="relative w-24 h-24 flex-shrink-0">
 												<Image
-													src={"/placeholder.svg"}
+													src={
+														item.image || "/placeholder.svg?height=96&width=96"
+													}
 													alt={item.name}
 													fill
 													className="object-cover rounded-lg"
@@ -233,7 +213,7 @@ export default function CartPage() {
 													<div>
 														<h3 className="font-medium">{item.name}</h3>
 														<p className="text-sm text-muted-foreground">
-															브랜드
+															{item.brand}
 														</p>
 													</div>
 
@@ -242,7 +222,7 @@ export default function CartPage() {
 														size="icon"
 														onClick={() => removeItem(item.id)}
 													>
-														<Trash2 className="h-4 w-4" />
+														<LucideIcon name="Trash2" className="h-4 w-4" />
 													</Button>
 												</div>
 
@@ -252,6 +232,12 @@ export default function CartPage() {
 															<span className="text-lg font-bold">
 																{item.price.toLocaleString()}원
 															</span>
+															{item.originalPrice &&
+																item.originalPrice > item.price && (
+																	<span className="text-sm text-muted-foreground line-through">
+																		{item.originalPrice.toLocaleString()}원
+																	</span>
+																)}
 														</div>
 														<p className="text-sm font-medium">
 															총 {(item.price * item.quantity).toLocaleString()}
@@ -267,7 +253,7 @@ export default function CartPage() {
 																updateQuantity(item.id, item.quantity - 1)
 															}
 														>
-															<Minus className="h-4 w-4" />
+															<LucideIcon name="Minus" className="h-4 w-4" />
 														</Button>
 														<span className="w-12 text-center">
 															{item.quantity}
@@ -279,7 +265,7 @@ export default function CartPage() {
 																updateQuantity(item.id, item.quantity + 1)
 															}
 														>
-															<Plus className="h-4 w-4" />
+															<LucideIcon name="Plus" className="h-4 w-4" />
 														</Button>
 													</div>
 												</div>
@@ -289,6 +275,63 @@ export default function CartPage() {
 								</Card>
 							))}
 						</div>
+
+						{/* Recommended Products */}
+						<Card>
+							<CardContent className="p-6">
+								<h3 className="font-semibold mb-4">함께 구매하면 좋은 상품</h3>
+								<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+									{recommendedProducts.map((product) => (
+										<div
+											key={product.id}
+											className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+										>
+											<div className="relative w-full h-32 mb-3">
+												<Image
+													src={product.image || "/placeholder.svg"}
+													alt={product.name}
+													fill
+													className="object-cover rounded"
+												/>
+											</div>
+											<h4 className="font-medium text-sm mb-1 line-clamp-2">
+												{product.name}
+											</h4>
+											<p className="text-xs text-muted-foreground mb-2">
+												{product.brand}
+											</p>
+											<div className="flex items-center gap-1 mb-2">
+												<span className="font-bold text-sm">
+													{product.price.toLocaleString()}원
+												</span>
+												{product.originalPrice > product.price && (
+													<span className="text-xs text-muted-foreground line-through">
+														{product.originalPrice.toLocaleString()}원
+													</span>
+												)}
+											</div>
+											<Button
+												size="sm"
+												className="w-full"
+												onClick={() =>
+													addItem({
+														id: product.id,
+														name: product.name,
+														price: product.price,
+														originalPrice: product.originalPrice,
+														image: product.image,
+														brand: product.brand,
+														inStock: product.inStock,
+													})
+												}
+											>
+												담기
+											</Button>
+										</div>
+									))}
+								</div>
+							</CardContent>
+						</Card>
 					</div>
 
 					{/* Order Summary */}
@@ -297,33 +340,25 @@ export default function CartPage() {
 						<Card>
 							<CardContent className="p-6">
 								<h3 className="font-semibold mb-4 flex items-center gap-2">
-									<Tag className="h-4 w-4" />
+									<LucideIcon name="Tag" className="h-4 w-4" />
 									쿠폰 적용
 								</h3>
-								<div className="space-y-3">
-									<div className="flex gap-2">
-										<Input
-											placeholder="쿠폰 코드 입력"
-											value={couponCode}
-											onChange={(e) => setCouponCode(e.target.value)}
-										/>
-										<Button onClick={handleApplyCoupon} disabled={!couponCode}>
-											적용
-										</Button>
+								<div className="flex gap-2 mb-4">
+									<Input
+										placeholder="쿠폰 코드 입력"
+										value={couponCode}
+										onChange={(e) => setCouponCode(e.target.value)}
+									/>
+									<Button onClick={handleApplyCoupon}>적용</Button>
+								</div>
+								{appliedCoupon && (
+									<div className="text-sm text-green-600">
+										쿠폰 '{appliedCoupon.code}' 적용됨 (-
+										{appliedCoupon.discount.toLocaleString()}원)
 									</div>
-									{appliedCoupon && (
-										<div className="flex items-center justify-between text-sm">
-											<span className="text-green-600">
-												쿠폰 적용: {appliedCoupon.code}
-											</span>
-											<span className="text-green-600 font-medium">
-												-{appliedCoupon.discount.toLocaleString()}원
-											</span>
-										</div>
-									)}
-									<div className="text-xs text-muted-foreground">
-										사용 가능한 쿠폰: WELCOME10, SAVE5000, NEWUSER
-									</div>
+								)}
+								<div className="text-xs text-muted-foreground mt-2">
+									사용 가능한 쿠폰: WELCOME10, SAVE5000, NEWUSER
 								</div>
 							</CardContent>
 						</Card>
@@ -334,17 +369,21 @@ export default function CartPage() {
 								<h3 className="font-semibold mb-4">주문 요약</h3>
 								<div className="space-y-3">
 									<div className="flex justify-between">
-										<span>선택 상품 ({selectedItems.length}개)</span>
+										<span>상품금액</span>
 										<span>{selectedTotalPrice.toLocaleString()}원</span>
 									</div>
-
+									{totalSavings > 0 && (
+										<div className="flex justify-between text-green-600">
+											<span>상품할인</span>
+											<span>-{totalSavings.toLocaleString()}원</span>
+										</div>
+									)}
 									{appliedCoupon && (
 										<div className="flex justify-between text-green-600">
-											<span>쿠폰 할인</span>
+											<span>쿠폰할인</span>
 											<span>-{appliedCoupon.discount.toLocaleString()}원</span>
 										</div>
 									)}
-
 									<div className="flex justify-between">
 										<span>배송비</span>
 										<span>
@@ -355,23 +394,21 @@ export default function CartPage() {
 											)}
 										</span>
 									</div>
-
 									<Separator />
-
 									<div className="flex justify-between text-lg font-bold">
 										<span>총 결제금액</span>
 										<span>{(finalPrice + shippingFee).toLocaleString()}원</span>
 									</div>
-
-									{shippingFee > 0 && (
-										<p className="text-xs text-muted-foreground">
-											{(50000 - finalPrice).toLocaleString()}원 더 구매하면
-											무료배송!
-										</p>
-									)}
 								</div>
 
-								<div className="mt-6 space-y-2">
+								{finalPrice < 50000 && (
+									<div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg text-sm text-blue-700 dark:text-blue-300">
+										{(50000 - finalPrice).toLocaleString()}원 더 구매하시면
+										무료배송!
+									</div>
+								)}
+
+								<div className="mt-6 space-y-3">
 									<Link href="/checkout">
 										<Button
 											className="w-full"
@@ -389,71 +426,6 @@ export default function CartPage() {
 								</div>
 							</CardContent>
 						</Card>
-					</div>
-				</div>
-
-				{/* Recommended Products */}
-				<div className="mt-16">
-					<h2 className="text-xl font-bold mb-6">함께 구매하면 좋은 상품</h2>
-					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-						{recommendedProducts.map((product) => (
-							<Card
-								key={product.id}
-								className="group hover:shadow-lg transition-all duration-300"
-							>
-								<CardContent className="p-0">
-									<div className="relative overflow-hidden rounded-t-lg">
-										<Image
-											src={product.image || "/placeholder.svg"}
-											alt={product.name}
-											width={200}
-											height={200}
-											className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-										/>
-										<Button
-											variant="secondary"
-											size="icon"
-											className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
-										>
-											<Heart className="h-4 w-4" />
-										</Button>
-									</div>
-									<div className="p-4">
-										<p className="text-xs text-muted-foreground mb-1">
-											{product.brand}
-										</p>
-										<h3 className="font-medium mb-2 line-clamp-2">
-											{product.name}
-										</h3>
-										<div className="flex items-center gap-2 mb-3">
-											<span className="text-lg font-bold">
-												{product.price.toLocaleString()}원
-											</span>
-											<span className="text-sm text-muted-foreground line-through">
-												{product.originalPrice.toLocaleString()}원
-											</span>
-										</div>
-										<Button
-											size="sm"
-											className="w-full"
-											onClick={() =>
-												addItem({
-													id: product.id,
-													name: product.name,
-													price: product.price,
-													originalPrice: product.originalPrice,
-													image: product.image,
-													brand: product.brand,
-													inStock: true,
-												})
-											}
-										>
-											장바구니 담기
-										</Button>
-									</div>
-								</CardContent>
-							</Card>
-						))}
 					</div>
 				</div>
 			</div>

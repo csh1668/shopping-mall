@@ -188,7 +188,7 @@ export function SearchResults({
 							: "grid-cols-1"
 					}`}
 				>
-					{[...Array(8)].map((_, i) => (
+					{[...Array(8).keys()].map((_, i) => (
 						// biome-ignore lint/suspicious/noArrayIndexKey: 임시
 						<Card key={i} className={viewMode === "list" ? "flex" : ""}>
 							<CardContent

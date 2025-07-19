@@ -13,11 +13,11 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/server/client";
-import { useAuthStore } from "@/stores/auth-store";
 
 export function UserMenu() {
-	const { user, signOut } = useAuthStore();
+	const { user, signOut } = useAuth();
 
 	// tRPC Hook 사용 - 자동 캐싱, 리팩토링, 로딩 상태 관리
 	const { data: metadata, isLoading } = trpc.user.getUserMetadata.useQuery(
@@ -33,9 +33,6 @@ export function UserMenu() {
 						로그인
 					</Button>
 				</Link>
-				<Link href="/auth">
-					<Button size="sm">회원가입</Button>
-				</Link>
 			</div>
 		);
 	}
@@ -50,7 +47,7 @@ export function UserMenu() {
 				<Button variant="ghost" className="relative h-8 w-8 rounded-full">
 					<Avatar className="h-8 w-8">
 						<AvatarImage
-							src="/placeholder.svg"
+							src={user.user_metadata?.avatar_url || "/placeholder.svg"}
 							alt={metadata?.fullName || ""}
 						/>
 						<AvatarFallback>

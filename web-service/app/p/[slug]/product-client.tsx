@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import {
 	Heart,
 	Minus,
@@ -20,6 +21,31 @@ interface ProductClientProps {
 	product: any;
 	discountRate: number;
 }
+
+// 애니메이션 설정
+const containerVariants = {
+	hidden: { opacity: 0 },
+	visible: {
+		opacity: 1,
+		transition: {
+			staggerChildren: 0.1,
+			delayChildren: 0.2,
+		},
+	},
+};
+
+const itemVariants = {
+	hidden: {
+		opacity: 0,
+		y: 20,
+		scale: 0.98,
+	},
+	visible: {
+		opacity: 1,
+		y: 0,
+		scale: 1,
+	},
+};
 
 export default function ProductClient({
 	product,
@@ -61,13 +87,19 @@ export default function ProductClient({
 	};
 
 	return (
-		<div className="space-y-6">
-			<div>
+		<motion.div
+			className="space-y-6"
+			variants={containerVariants}
+			initial="hidden"
+			animate="visible"
+		>
+			{/* 제품명과 별점 */}
+			<motion.div variants={itemVariants}>
 				<h1 className="text-2xl lg:text-3xl font-bold mb-2">{product.name}</h1>
 				<div className="flex items-center gap-4 mb-4">
 					<div className="flex items-center gap-1">
 						<div className="flex">
-							{[...Array(5)].map((i) => (
+							{[...Array(5).keys()].map((i) => (
 								<Star
 									key={`rating-${product.id}-${i}`}
 									className={`h-4 w-4 ${
@@ -90,9 +122,10 @@ export default function ProductClient({
 						공유
 					</Button>
 				</div>
-			</div>
+			</motion.div>
 
-			<div className="space-y-2">
+			{/* 가격 정보 */}
+			<motion.div className="space-y-2" variants={itemVariants}>
 				<div className="flex items-center gap-3">
 					<span className="text-3xl font-bold">
 						{product.price.toLocaleString()}원
@@ -109,17 +142,17 @@ export default function ProductClient({
 				{product.shortDescription && (
 					<p className="text-muted-foreground">{product.shortDescription}</p>
 				)}
-			</div>
+			</motion.div>
 
-			{/* Variants - 실제로는 productVariants 데이터 사용 */}
+			{/* 색상 선택 */}
 			{product.productVariants.some(
 				(v: { type: string }) => v.type === "COLOR",
 			) && (
-				<div className="space-y-3">
+				<motion.div className="space-y-3" variants={itemVariants}>
 					<h3 className="font-medium">색상: {selectedColor.name}</h3>
 					<div className="flex gap-2">
-						{colors.map((color) => (
-							<button
+						{colors.map((color, index) => (
+							<motion.button
 								type="button"
 								key={color.value}
 								onClick={() => setSelectedColor(color)}
@@ -130,37 +163,60 @@ export default function ProductClient({
 								}`}
 								style={{ backgroundColor: color.hex }}
 								title={color.name}
+								whileHover={{ scale: 1.1 }}
+								whileTap={{ scale: 0.95 }}
+								initial={{ scale: 0, opacity: 0 }}
+								animate={{
+									scale: 1,
+									opacity: 1,
+									transition: { delay: 0.6 + index * 0.1 },
+								}}
 							/>
 						))}
 					</div>
-				</div>
+				</motion.div>
 			)}
 
+			{/* 사이즈 선택 */}
 			{product.productVariants.some(
 				(v: { type: string }) => v.type === "SIZE",
 			) && (
-				<div className="space-y-3">
+				<motion.div className="space-y-3" variants={itemVariants}>
 					<h3 className="font-medium">사이즈: {selectedSize}</h3>
 					<div className="flex gap-2">
-						{sizes.map((size) => (
-							<Button
+						{sizes.map((size, index) => (
+							<motion.div
 								key={size}
-								variant={selectedSize === size ? "default" : "outline"}
-								size="sm"
-								onClick={() => setSelectedSize(size)}
+								initial={{ scale: 0, opacity: 0 }}
+								animate={{
+									scale: 1,
+									opacity: 1,
+									transition: { delay: 0.8 + index * 0.1 },
+								}}
+								whileHover={{ scale: 1.05 }}
+								whileTap={{ scale: 0.95 }}
 							>
-								{size}
-							</Button>
+								<Button
+									variant={selectedSize === size ? "default" : "outline"}
+									size="sm"
+									onClick={() => setSelectedSize(size)}
+								>
+									{size}
+								</Button>
+							</motion.div>
 						))}
 					</div>
-				</div>
+				</motion.div>
 			)}
 
-			{/* Quantity */}
-			<div className="space-y-3">
+			{/* 수량 선택 */}
+			<motion.div className="space-y-3" variants={itemVariants}>
 				<h3 className="font-medium">수량</h3>
 				<div className="flex items-center gap-3">
-					<div className="flex items-center border rounded-lg">
+					<motion.div
+						className="flex items-center border rounded-lg"
+						whileHover={{ scale: 1.02 }}
+					>
 						<Button
 							variant="ghost"
 							size="icon"
@@ -169,9 +225,15 @@ export default function ProductClient({
 						>
 							<Minus className="h-4 w-4" />
 						</Button>
-						<span className="px-4 py-2 min-w-[3rem] text-center">
+						<motion.span
+							className="px-4 py-2 min-w-[3rem] text-center"
+							key={quantity}
+							initial={{ scale: 1.2 }}
+							animate={{ scale: 1 }}
+							transition={{ duration: 0.2 }}
+						>
 							{quantity}
-						</span>
+						</motion.span>
 						<Button
 							variant="ghost"
 							size="icon"
@@ -180,65 +242,81 @@ export default function ProductClient({
 						>
 							<Plus className="h-4 w-4" />
 						</Button>
-					</div>
+					</motion.div>
 					<span className="text-sm text-muted-foreground">
 						재고: {product.stock}개
 					</span>
 				</div>
-			</div>
+			</motion.div>
 
-			{/* Action Buttons */}
-			<div className="space-y-3">
+			{/* 액션 버튼들 */}
+			<motion.div className="space-y-3" variants={itemVariants}>
 				<div className="flex gap-3">
+					<motion.div
+						className="flex-1"
+						whileHover={{ scale: 1.02 }}
+						whileTap={{ scale: 0.98 }}
+					>
+						<Button
+							size="lg"
+							className="w-full"
+							disabled={product.stock === 0}
+							onClick={() => {
+								// TODO: 장바구니 추가 기능
+							}}
+						>
+							<ShoppingCart className="mr-2 h-5 w-5" />
+							장바구니 담기
+						</Button>
+					</motion.div>
+					<motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+						<Button
+							variant="secondary"
+							size="icon"
+							onClick={() => setIsWishlisted(!isWishlisted)}
+						>
+							<Heart
+								className={`h-5 w-5 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`}
+							/>
+						</Button>
+					</motion.div>
+				</div>
+				<motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
 					<Button
 						size="lg"
-						className="flex-1"
+						variant="outline"
+						className="w-full"
 						disabled={product.stock === 0}
-						onClick={() => {
-							// TODO: 장바구니 추가 기능
-						}}
 					>
-						<ShoppingCart className="mr-2 h-5 w-5" />
-						장바구니 담기
+						바로 구매하기
 					</Button>
-					<Button
-						variant="secondary"
-						size="icon"
-						onClick={() => setIsWishlisted(!isWishlisted)}
-					>
-						<Heart
-							className={`h-5 w-5 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`}
-						/>
-					</Button>
-				</div>
-				<Button
-					size="lg"
-					variant="outline"
-					className="w-full"
-					disabled={product.stock === 0}
-				>
-					바로 구매하기
-				</Button>
-			</div>
+				</motion.div>
+			</motion.div>
 
-			{/* Features */}
-			<div className="grid grid-cols-3 gap-4 pt-6 border-t">
-				<div className="text-center">
-					<Truck className="h-6 w-6 mx-auto mb-2 text-primary" />
-					<p className="text-sm font-medium">무료배송</p>
-					<p className="text-xs text-muted-foreground">5만원 이상</p>
-				</div>
-				<div className="text-center">
-					<Shield className="h-6 w-6 mx-auto mb-2 text-primary" />
-					<p className="text-sm font-medium">품질보증</p>
-					<p className="text-xs text-muted-foreground">1년 A/S</p>
-				</div>
-				<div className="text-center">
-					<RotateCcw className="h-6 w-6 mx-auto mb-2 text-primary" />
-					<p className="text-sm font-medium">무료반품</p>
-					<p className="text-xs text-muted-foreground">7일 이내</p>
-				</div>
-			</div>
-		</div>
+			{/* 기능 안내 */}
+			<motion.div
+				className="grid grid-cols-3 gap-4 pt-6 border-t"
+				variants={itemVariants}
+			>
+				{[
+					{ icon: Truck, title: "무료배송", desc: "5만원 이상" },
+					{ icon: Shield, title: "품질보증", desc: "1년 A/S" },
+					{ icon: RotateCcw, title: "무료반품", desc: "7일 이내" },
+				].map((feature, index) => (
+					<motion.div
+						key={feature.title}
+						className="text-center"
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						transition={{ delay: 1.2 + index * 0.1 }}
+						whileHover={{ scale: 1.05, y: -2 }}
+					>
+						<feature.icon className="h-6 w-6 mx-auto mb-2 text-primary" />
+						<p className="text-sm font-medium">{feature.title}</p>
+						<p className="text-xs text-muted-foreground">{feature.desc}</p>
+					</motion.div>
+				))}
+			</motion.div>
+		</motion.div>
 	);
 }
