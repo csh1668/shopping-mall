@@ -13,7 +13,7 @@ import { useCartStore } from "@/stores/cart-store";
 
 const recommendedProducts = [
 	{
-		id: 11,
+		id: "11",
 		name: "무선 충전패드",
 		price: 45000,
 		originalPrice: 59000,
@@ -23,7 +23,7 @@ const recommendedProducts = [
 		inStock: true,
 	},
 	{
-		id: 12,
+		id: "12",
 		name: "스마트폰 케이스",
 		price: 25000,
 		originalPrice: 35000,
@@ -33,7 +33,7 @@ const recommendedProducts = [
 		inStock: true,
 	},
 	{
-		id: 13,
+		id: "13",
 		name: "블루투스 키보드",
 		price: 89000,
 		originalPrice: 120000,
@@ -55,7 +55,7 @@ export default function CartPage() {
 		addItem,
 	} = useCartStore();
 
-	const [selectedItems, setSelectedItems] = useState<number[]>(
+	const [selectedItems, setSelectedItems] = useState<string[]>(
 		items.map((item) => item.id),
 	);
 	const [couponCode, setCouponCode] = useState("");
@@ -81,7 +81,7 @@ export default function CartPage() {
 		}
 	};
 
-	const handleSelectItem = (itemId: number, checked: boolean) => {
+	const handleSelectItem = (itemId: string, checked: boolean) => {
 		if (checked) {
 			setSelectedItems([...selectedItems, itemId]);
 		} else {
@@ -185,9 +185,7 @@ export default function CartPage() {
 						{/* Cart Items List */}
 						<div className="space-y-4">
 							{items.map((item) => (
-								<Card
-									key={`${item.id}-${item.selectedColor}-${item.selectedSize}`}
-								>
+								<Card key={item.id}>
 									<CardContent className="p-6">
 										<div className="flex gap-4">
 											<Checkbox

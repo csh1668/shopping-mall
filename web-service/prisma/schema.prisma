@@ -175,10 +175,6 @@ model Order {
   discountAmount Int        @default(0) @map("discount_amount")
   shippingFee   Int         @default(0) @map("shipping_fee") // 배송비
 
-  // 결제는 토스페이먼츠 사용
-  // paymentMethod String      @map("payment_method")
-  // paymentStatus PaymentStatus @default(PENDING) @map("payment_status") // 결제 상태
-
   trackingNumber String?    @map("tracking_number") // 송장번호
   notes         String? // 주문 메모
 
@@ -190,6 +186,7 @@ model Order {
   address Address      @relation(fields: [addressId], references: [id])
   items   OrderItem[]
   statusHistory OrderStatusHistory[] // 주문 상태 이력
+  payment Payment? // 결제 정보 (1:1 관계)
 
   @@map("orders")
 }
@@ -245,6 +242,34 @@ model Review {
   @@map("reviews")
 }
 
+model Payment {
+  id                String        @id @default(cuid())
+  orderId           String        @unique @map("order_id") // 주문과 1:1 관계
+  paymentKey        String?       @unique @map("payment_key") // 토스페이먼츠 결제 키
+  transactionId     String?       @unique @map("transaction_id") // 토스페이먼츠 거래 ID
+  orderName         String        @map("order_name") // 주문명
+  amount            Int           // 결제 금액
+  method            PaymentMethod? // 결제 수단
+  status            PaymentStatus @default(PENDING) // 결제 상태
+  requestedAt       DateTime?     @map("requested_at") // 결제 요청 시간
+  approvedAt        DateTime?     @map("approved_at") // 결제 승인 시간
+  failReason        String?       @map("fail_reason") // 실패 사유
+  cancelReason      String?       @map("cancel_reason") // 취소 사유
+  refundAmount      Int?          @default(0) @map("refund_amount") // 환불 금액
+  customerKey       String        @map("customer_key") // 고객 키 (사용자 ID 또는 ANONYMOUS)
+  
+  // 토스페이먼츠 응답 데이터 저장용
+  rawData           Json?         @map("raw_data") // 토스페이먼츠 전체 응답 데이터
+
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
 model Coupon {
   id          String @id @default(cuid())
   code        String @unique
@@ -294,8 +319,19 @@ enum PaymentStatus {
   PENDING     // 결제 대기
   PAID        // 결제 완료
   FAILED      // 결제 실패
+  CANCELLED   // 결제 취소
   REFUNDED    // 환불 완료
   PARTIALLY_REFUNDED // 부분 환불 완료
+}
+
+enum PaymentMethod {
+  CARD        // 카드
+  TRANSFER    // 계좌이체
+  VIRTUAL_ACCOUNT // 가상계좌
+  MOBILE      // 휴대폰
+  KAKAOPAY    // 카카오페이
+  NAVERPAY    // 네이버페이
+  TOSSPAY     // 토스페이
 }
 
 enum CouponType {

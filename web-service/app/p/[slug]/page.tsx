@@ -11,6 +11,7 @@ import type { AppRouter } from "@/server/router";
 import { sTrpc } from "@/server/server";
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
+type ProductInfo = RouterOutput["product"]["getBySlug"];
 
 export async function generateStaticParams() {
 	const products = await sTrpc.product.list.fetch({
@@ -30,7 +31,7 @@ export default async function ProductDetailPage({
 	params: Promise<{ slug: string }>;
 }) {
 	const { slug } = await params;
-	let product: RouterOutput["product"]["getBySlug"];
+	let product: ProductInfo;
 
 	try {
 		product = await sTrpc.product.getBySlug.fetch({ slug });
@@ -44,15 +45,6 @@ export default async function ProductDetailPage({
 				((product.originalPrice - product.price) / product.originalPrice) * 100,
 			)
 		: 0;
-
-	// 평점 분포 (실제 데이터가 없으므로 임시)
-	const _ratingDistribution = [
-		{ stars: 5, count: Math.floor(product.reviewCount * 0.69), percentage: 69 },
-		{ stars: 4, count: Math.floor(product.reviewCount * 0.2), percentage: 20 },
-		{ stars: 3, count: Math.floor(product.reviewCount * 0.07), percentage: 7 },
-		{ stars: 2, count: Math.floor(product.reviewCount * 0.03), percentage: 3 },
-		{ stars: 1, count: Math.floor(product.reviewCount * 0.01), percentage: 1 },
-	];
 
 	return (
 		<div className="container px-4 py-8">

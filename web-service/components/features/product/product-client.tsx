@@ -1,5 +1,6 @@
 "use client";
 
+import type { inferRouterOutputs } from "@trpc/server";
 import { motion } from "framer-motion";
 import {
 	Heart,
@@ -15,10 +16,14 @@ import {
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import type { AppRouter } from "@/server/router";
+import { useCartStore } from "@/stores/cart-store";
+
+type RouterOutput = inferRouterOutputs<AppRouter>;
+type ProductInfo = RouterOutput["product"]["getBySlug"];
 
 interface ProductClientProps {
-	// biome-ignore lint/suspicious/noExplicitAny: 실제 타입은 tRPC에서 자동 생성됨
-	product: any;
+	product: ProductInfo;
 	discountRate: number;
 }
 
@@ -50,6 +55,7 @@ const itemVariants = {
 export function ProductClient({ product, discountRate }: ProductClientProps) {
 	const [quantity, setQuantity] = useState(1);
 	const [isWishlisted, setIsWishlisted] = useState(false);
+	const { addItem } = useCartStore();
 
 	const handleQuantityChange = (change: number) => {
 		const newQuantity = quantity + change;
@@ -116,7 +122,7 @@ export function ProductClient({ product, discountRate }: ProductClientProps) {
 					<span className="text-3xl font-bold">
 						{product.price.toLocaleString()}원
 					</span>
-					{product.originalPrice > product.price && (
+					{product.originalPrice && product.originalPrice > product.price && (
 						<>
 							<span className="text-lg text-muted-foreground line-through">
 								{product.originalPrice.toLocaleString()}원
@@ -132,43 +138,6 @@ export function ProductClient({ product, discountRate }: ProductClientProps) {
 
 			{/* 색상 선택 */}
 			{/* TODO: productVariants 추가 후 수정 */}
-			{product.productVariants.some(
-				(v: { type: string }) => v.type === "COLOR",
-			) && (
-				<motion.div className="space-y-3" variants={itemVariants}>
-					<h3 className="font-medium">
-						색상: {product.productVariants[0].name}
-					</h3>
-					<div className="flex gap-2">
-						{product.productVariants.map(
-							(
-								variant: { id: string; name: string; hex: string },
-								index: number,
-							) => (
-								<motion.button
-									type="button"
-									key={variant.id}
-									className={`w-10 h-10 rounded-full border-2 transition-colors ${
-										product.productVariants[0].id === variant.id
-											? "border-primary"
-											: "border-muted"
-									}`}
-									style={{ backgroundColor: variant.hex }}
-									title={variant.name}
-									whileHover={{ scale: 1.1 }}
-									whileTap={{ scale: 0.95 }}
-									initial={{ scale: 0, opacity: 0 }}
-									animate={{
-										scale: 1,
-										opacity: 1,
-										transition: { delay: 0.6 + index * 0.1 },
-									}}
-								/>
-							),
-						)}
-					</div>
-				</motion.div>
-			)}
 
 			{/* 수량 선택 */}
 			<motion.div className="space-y-3" variants={itemVariants}>
@@ -223,7 +192,15 @@ export function ProductClient({ product, discountRate }: ProductClientProps) {
 							className="w-full"
 							disabled={product.stock === 0}
 							onClick={() => {
-								// TODO: 장바구니 추가 기능
+								addItem({
+									id: product.id,
+									name: product.name,
+									price: product.price,
+									originalPrice: product.originalPrice || product.price,
+									image: product.images[0],
+									brand: product.brand,
+									inStock: product.stock > 0,
+								});
 							}}
 						>
 							<ShoppingCart className="mr-2 h-5 w-5" />
