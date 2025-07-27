@@ -14,11 +14,7 @@ export function PaymentFail() {
 	const code = searchParams.get("code");
 
 	const handleRetry = () => {
-		if (orderId) {
-			router.push(`/checkout?orderId=${orderId}`);
-		} else {
-			router.push("/cart");
-		}
+		router.push("/cart");
 	};
 
 	const getErrorMessage = () => {
