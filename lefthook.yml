@@ -21,4 +21,5 @@ pre-push:
     typescript-check:
       root: "web-service/"
       glob: "*.{ts,tsx}"
+      exclude: ".next/**/*"
       run: npx tsc --noEmit
