@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import LucideIcon from "@/components/common/lucide-icon";
+import { LucideIcon } from "@/components/common";
 import { AnimatedCard } from "@/components/ui/animated-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import LucideIcon, {
+import {
+	LucideIcon,
 	type LucideIconName,
 } from "@/components/common/lucide-icon";
 // Categories 컴포넌트 import 제거
@@ -214,7 +215,7 @@ export default async function HomePage() {
 					linkHref="/products"
 				/>
 
-				<ProductGrid products={hotProductsData.products} />
+				<ProductGrid data={hotProductsData} />
 			</section>
 
 			{/* 특징 */}
@@ -248,7 +249,7 @@ export default async function HomePage() {
 					linkHref="/products"
 				/>
 
-				<ProductGrid products={productsData.products} />
+				<ProductGrid data={productsData} />
 			</section>
 		</div>
 	);

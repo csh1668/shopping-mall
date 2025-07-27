@@ -2,7 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import LucideIcon, {
+import {
+	LucideIcon,
 	type LucideIconName,
 } from "@/components/common/lucide-icon";
 import { Badge } from "@/components/ui/badge";

@@ -2,9 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import LucideIcon from "@/components/common/lucide-icon";
-import { ThemeToggle } from "@/components/common/theme-toggle";
-import { UserMenu } from "@/components/common/user-menu";
+import { LucideIcon, ThemeToggle, UserMenu } from "@/components/common";
 import { CartSidebar } from "@/components/features/cart/cart-sidebar";
 import { SearchBar } from "@/components/search";
 import { Badge } from "@/components/ui/badge";
