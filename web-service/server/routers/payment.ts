@@ -417,7 +417,7 @@ export const paymentRouter = router({
 		}
 
 		try {
-			const payments = await ctx.prisma.payment.findMany({
+			const payments = await prisma.payment.findMany({
 				where: {
 					order: {
 						userId: ctx.user.id,
