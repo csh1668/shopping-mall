@@ -47,23 +47,9 @@ const itemVariants = {
 	},
 };
 
-export default function ProductClient({
-	product,
-	discountRate,
-}: ProductClientProps) {
+export function ProductClient({ product, discountRate }: ProductClientProps) {
 	const [quantity, setQuantity] = useState(1);
 	const [isWishlisted, setIsWishlisted] = useState(false);
-
-	// 임시 색상 및 사이즈 데이터 (실제로는 productVariants 사용)
-	const colors = [
-		{ name: "블랙", value: "black", hex: "#000000" },
-		{ name: "화이트", value: "white", hex: "#FFFFFF" },
-		{ name: "실버", value: "silver", hex: "#C0C0C0" },
-	];
-	const sizes = ["S", "M", "L", "XL"];
-
-	const [selectedColor, setSelectedColor] = useState(colors[0]);
-	const [selectedSize, setSelectedSize] = useState(sizes[0]);
 
 	const handleQuantityChange = (change: number) => {
 		const newQuantity = quantity + change;
@@ -145,66 +131,41 @@ export default function ProductClient({
 			</motion.div>
 
 			{/* 색상 선택 */}
+			{/* TODO: productVariants 추가 후 수정 */}
 			{product.productVariants.some(
 				(v: { type: string }) => v.type === "COLOR",
 			) && (
 				<motion.div className="space-y-3" variants={itemVariants}>
-					<h3 className="font-medium">색상: {selectedColor.name}</h3>
+					<h3 className="font-medium">
+						색상: {product.productVariants[0].name}
+					</h3>
 					<div className="flex gap-2">
-						{colors.map((color, index) => (
-							<motion.button
-								type="button"
-								key={color.value}
-								onClick={() => setSelectedColor(color)}
-								className={`w-10 h-10 rounded-full border-2 transition-colors ${
-									selectedColor.value === color.value
-										? "border-primary"
-										: "border-muted"
-								}`}
-								style={{ backgroundColor: color.hex }}
-								title={color.name}
-								whileHover={{ scale: 1.1 }}
-								whileTap={{ scale: 0.95 }}
-								initial={{ scale: 0, opacity: 0 }}
-								animate={{
-									scale: 1,
-									opacity: 1,
-									transition: { delay: 0.6 + index * 0.1 },
-								}}
-							/>
-						))}
-					</div>
-				</motion.div>
-			)}
-
-			{/* 사이즈 선택 */}
-			{product.productVariants.some(
-				(v: { type: string }) => v.type === "SIZE",
-			) && (
-				<motion.div className="space-y-3" variants={itemVariants}>
-					<h3 className="font-medium">사이즈: {selectedSize}</h3>
-					<div className="flex gap-2">
-						{sizes.map((size, index) => (
-							<motion.div
-								key={size}
-								initial={{ scale: 0, opacity: 0 }}
-								animate={{
-									scale: 1,
-									opacity: 1,
-									transition: { delay: 0.8 + index * 0.1 },
-								}}
-								whileHover={{ scale: 1.05 }}
-								whileTap={{ scale: 0.95 }}
-							>
-								<Button
-									variant={selectedSize === size ? "default" : "outline"}
-									size="sm"
-									onClick={() => setSelectedSize(size)}
-								>
-									{size}
-								</Button>
-							</motion.div>
-						))}
+						{product.productVariants.map(
+							(
+								variant: { id: string; name: string; hex: string },
+								index: number,
+							) => (
+								<motion.button
+									type="button"
+									key={variant.id}
+									className={`w-10 h-10 rounded-full border-2 transition-colors ${
+										product.productVariants[0].id === variant.id
+											? "border-primary"
+											: "border-muted"
+									}`}
+									style={{ backgroundColor: variant.hex }}
+									title={variant.name}
+									whileHover={{ scale: 1.1 }}
+									whileTap={{ scale: 0.95 }}
+									initial={{ scale: 0, opacity: 0 }}
+									animate={{
+										scale: 1,
+										opacity: 1,
+										transition: { delay: 0.6 + index * 0.1 },
+									}}
+								/>
+							),
+						)}
 					</div>
 				</motion.div>
 			)}

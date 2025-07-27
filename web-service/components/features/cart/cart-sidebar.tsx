@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import LucideIcon from "@/components/lucide-icon";
+import LucideIcon from "@/components/common/lucide-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";

@@ -2,14 +2,13 @@ import type { inferRouterOutputs } from "@trpc/server";
 import { Star } from "lucide-react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { ProductClient, RelatedProducts } from "@/components/features/product";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { AppRouter } from "@/server/router";
 import { sTrpc } from "@/server/server";
-import ProductClient from "./product-client";
-import RelatedProducts from "./related-products";
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
 

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import LucideIcon from "@/components/lucide-icon";
+import LucideIcon from "@/components/common/lucide-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -409,7 +409,7 @@ export default function CartPage() {
 								)}
 
 								<div className="mt-6 space-y-3">
-									<Link href="/checkout">
+									<Link href={`/order/create?items=${selectedItems.join(",")}`}>
 										<Button
 											className="w-full"
 											size="lg"

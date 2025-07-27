@@ -4,7 +4,7 @@ import type React from "react";
 import "./globals.css";
 
 import { MainLayout } from "@/components/layout/main-layout";
-import { Providers } from "./providers";
+import { Providers } from "@/components/providers/app-providers";
 
 const inter = Inter({ subsets: ["latin"] });
 

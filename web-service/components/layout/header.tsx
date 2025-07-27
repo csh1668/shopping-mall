@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import LucideIcon from "@/components/lucide-icon";
+import LucideIcon from "@/components/common/lucide-icon";
+import { ThemeToggle } from "@/components/common/theme-toggle";
+import { UserMenu } from "@/components/common/user-menu";
+import { CartSidebar } from "@/components/features/cart/cart-sidebar";
 import { SearchBar } from "@/components/search";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useCartStore } from "@/stores/cart-store";
-import { CartSidebar } from "../cart-sidebar";
-import { UserMenu } from "../user-menu";
 
 const categories = [
 	{ name: "패션", href: "/c/fashion" },

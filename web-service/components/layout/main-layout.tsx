@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { CartSidebar } from "@/components/cart-sidebar";
+import { CartSidebar } from "@/components/features/cart/cart-sidebar";
 import { Footer } from "./footer";
 import { Header } from "./header";
 

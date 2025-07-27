@@ -1,7 +1,9 @@
 import Link from "next/link";
-import LucideIcon, { type LucideIconName } from "@/components/lucide-icon";
+import LucideIcon, {
+	type LucideIconName,
+} from "@/components/common/lucide-icon";
 // Categories 컴포넌트 import 제거
-import Products from "@/components/products";
+import { ProductGrid } from "@/components/features/product";
 import { AnimatedCard } from "@/components/ui/animated-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -212,7 +214,7 @@ export default async function HomePage() {
 					linkHref="/products"
 				/>
 
-				<Products data={hotProductsData} />
+				<ProductGrid products={hotProductsData.products} />
 			</section>
 
 			{/* 특징 */}
@@ -246,7 +248,7 @@ export default async function HomePage() {
 					linkHref="/products"
 				/>
 
-				<Products data={productsData} />
+				<ProductGrid products={productsData.products} />
 			</section>
 		</div>
 	);
