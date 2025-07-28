@@ -13,41 +13,158 @@ import {
 
 const logger = createLogger("PaymentRouter");
 
+// 지연 함수
+function delay(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// 재시도 가능한 에러인지 확인
+function isRetryableError(error: unknown, status?: number): boolean {
+	// 네트워크 에러
+	if (error instanceof TypeError && error.message.includes("fetch")) {
+		return true;
+	}
+
+	// 타임아웃 에러
+	if (error instanceof Error && error.name === "AbortError") {
+		return true;
+	}
+
+	// 5xx 서버 에러
+	if (status && status >= 500) {
+		return true;
+	}
+
+	// 429 Too Many Requests
+	if (status === 429) {
+		return true;
+	}
+
+	return false;
+}
+
 // 토스페이먼츠 API 클라이언트 함수
 async function tossPaymentsRequest(
 	endpoint: string,
 	method: string = "GET",
 	body?: Record<string, unknown>,
+	options: {
+		timeout?: number;
+		maxRetries?: number;
+		retryDelay?: number;
+	} = {},
 ) {
+	const {
+		timeout = 10000, // 10초 타임아웃
+		maxRetries = 3,
+		retryDelay = 1000, // 1초 지연
+	} = options;
+
 	const secretKey = serverEnv.TOSS_PAYMENTS_SECRET_KEY;
-
 	const url = `https://api.tosspayments.com/v1/${endpoint}`;
-	const options: RequestInit = {
-		method,
-		headers: {
-			Authorization: `Basic ${Buffer.from(`${secretKey}:`).toString("base64")}`,
-			"Content-Type": "application/json",
-		},
-	};
 
-	if (body && method !== "GET") {
-		options.body = JSON.stringify(body);
+	for (let attempt = 0; attempt <= maxRetries; attempt++) {
+		const abortController = new AbortController();
+		const timeoutId = setTimeout(() => abortController.abort(), timeout);
+
+		try {
+			const requestOptions: RequestInit = {
+				method,
+				headers: {
+					Authorization: `Basic ${Buffer.from(`${secretKey}:`).toString("base64")}`,
+					"Content-Type": "application/json",
+				},
+				signal: abortController.signal,
+			};
+
+			if (body && method !== "GET") {
+				requestOptions.body = JSON.stringify(body);
+			}
+
+			logger.info("Toss Payments API request", {
+				attempt: attempt + 1,
+				endpoint,
+				method,
+				timeout,
+			});
+
+			const response = await fetch(url, requestOptions);
+			clearTimeout(timeoutId);
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				const error = new Error(
+					`Toss Payments API error: ${data.message || response.statusText}`,
+				);
+
+				logger.error("Toss Payments API error", {
+					attempt: attempt + 1,
+					status: response.status,
+					error: data,
+					endpoint,
+					method,
+				});
+
+				// 재시도 불가능한 에러이거나 마지막 시도인 경우 에러 던지기
+				if (
+					!isRetryableError(error, response.status) ||
+					attempt === maxRetries
+				) {
+					throw error;
+				}
+
+				// 재시도 가능한 에러인 경우 다음 시도 진행
+				if (attempt < maxRetries) {
+					const delayMs = retryDelay * 2 ** attempt; // 지수 백오프
+					logger.warn("Retrying Toss Payments API request", {
+						attempt: attempt + 1,
+						nextAttemptIn: delayMs,
+						status: response.status,
+					});
+					await delay(delayMs);
+					continue;
+				}
+			}
+
+			logger.info("Toss Payments API request successful", {
+				attempt: attempt + 1,
+				endpoint,
+				method,
+				status: response.status,
+			});
+
+			return data;
+		} catch (error) {
+			clearTimeout(timeoutId);
+
+			logger.error("Toss Payments API request failed", {
+				attempt: attempt + 1,
+				endpoint,
+				method,
+				error: error instanceof Error ? error.message : error,
+			});
+
+			// 재시도 불가능한 에러이거나 마지막 시도인 경우 에러 던지기
+			if (!isRetryableError(error) || attempt === maxRetries) {
+				throw error;
+			}
+
+			// 재시도 가능한 에러인 경우 다음 시도 진행
+			if (attempt < maxRetries) {
+				const delayMs = retryDelay * 2 ** attempt; // 지수 백오프
+				logger.warn("Retrying Toss Payments API request after error", {
+					attempt: attempt + 1,
+					nextAttemptIn: delayMs,
+					error: error instanceof Error ? error.message : error,
+				});
+				await delay(delayMs);
+			}
+		}
 	}
 
-	const response = await fetch(url, options);
-	const data = await response.json();
-
-	if (!response.ok) {
-		logger.error("Toss Payments API error", {
-			status: response.status,
-			error: data,
-		});
-		throw new Error(
-			`Toss Payments API error: ${data.message || response.statusText}`,
-		);
-	}
-
-	return data;
+	// 이 코드에 도달하면 안 되지만, 타입스크립트를 위해 추가
+	throw new Error("Maximum retry attempts exceeded");
 }
 
 export const paymentRouter = router({
@@ -93,6 +210,22 @@ export const paymentRouter = router({
 						code: "CONFLICT",
 						message: "이미 결제가 완료된 주문입니다",
 					});
+				}
+
+				// 이미 결제가 있는 경우 해당 결제 정보 반환
+				if (
+					existingPayment &&
+					existingPayment.status === PaymentStatus.PENDING
+				) {
+					return {
+						paymentId: existingPayment.id,
+						orderId,
+						orderName: existingPayment.orderName,
+						amount: existingPayment.amount,
+						customerKey: existingPayment.customerKey,
+						successUrl,
+						failUrl,
+					};
 				}
 
 				// customerKey 설정 (로그인 사용자 또는 ANONYMOUS)
@@ -202,33 +335,31 @@ export const paymentRouter = router({
 					paymentMethod = methodMap[tossResponse.method] || PaymentMethod.CARD;
 				}
 
-				// 결제 정보 업데이트
-				const updatedPayment = await prisma.payment.update({
-					where: { orderId },
-					data: {
-						paymentKey,
-						transactionId: tossResponse.transactionKey,
-						status: PaymentStatus.PAID,
-						method: paymentMethod,
-						approvedAt: new Date(tossResponse.approvedAt),
-						rawData: tossResponse,
-					},
-				});
-
-				// 주문 상태를 CONFIRMED로 업데이트
-				await prisma.order.update({
-					where: { id: orderId },
-					data: { status: "CONFIRMED" },
-				});
-
-				// 주문 상태 이력 추가
-				await prisma.orderStatusHistory.create({
-					data: {
-						orderId,
-						status: "CONFIRMED",
-						notes: "결제 완료",
-					},
-				});
+				// 결제 정보 업데이트, 주문 상태 업데이트, 주문 상태 이력 추가를 트랜잭션으로 처리
+				const [updatedPayment] = await prisma.$transaction([
+					prisma.payment.update({
+						where: { orderId },
+						data: {
+							paymentKey,
+							transactionId: tossResponse.transactionKey,
+							status: PaymentStatus.PAID,
+							method: paymentMethod,
+							approvedAt: new Date(tossResponse.approvedAt),
+							rawData: tossResponse,
+						},
+					}),
+					prisma.order.update({
+						where: { id: orderId },
+						data: { status: "CONFIRMED" },
+					}),
+					prisma.orderStatusHistory.create({
+						data: {
+							orderId,
+							status: "CONFIRMED",
+							notes: "결제 완료",
+						},
+					}),
+				]);
 
 				logger.info("Payment confirmed", {
 					paymentKey,
@@ -305,37 +436,42 @@ export const paymentRouter = router({
 					cancelData,
 				);
 
-				// 결제 상태 업데이트
-				const newStatus = cancelAmount
-					? PaymentStatus.PARTIALLY_REFUNDED
-					: PaymentStatus.REFUNDED;
+				// 트랜잭션 사용
+				const updatedPayment = await prisma.$transaction(async (tx) => {
+					// 결제 상태 업데이트
+					const newStatus = cancelAmount
+						? PaymentStatus.PARTIALLY_REFUNDED
+						: PaymentStatus.REFUNDED;
 
-				const updatedPayment = await prisma.payment.update({
-					where: { paymentKey },
-					data: {
-						status: newStatus,
-						cancelReason,
-						refundAmount:
-							(payment.refundAmount || 0) + (cancelAmount || payment.amount),
-						rawData: tossResponse,
-					},
-				});
-
-				// 주문 상태 업데이트
-				if (!cancelAmount) {
-					await prisma.order.update({
-						where: { id: payment.orderId },
-						data: { status: "REFUNDED" },
+					const updatedPayment = await tx.payment.update({
+						where: { paymentKey },
+						data: {
+							status: newStatus,
+							cancelReason,
+							refundAmount:
+								(payment.refundAmount || 0) + (cancelAmount || payment.amount),
+							rawData: tossResponse,
+						},
 					});
 
-					await prisma.orderStatusHistory.create({
+					// 주문 상태 업데이트
+					if (!cancelAmount) {
+						await tx.order.update({
+							where: { id: payment.orderId },
+							data: { status: "REFUNDED" },
+						});
+					}
+
+					await tx.orderStatusHistory.create({
 						data: {
 							orderId: payment.orderId,
 							status: "REFUNDED",
-							notes: `환불 완료: ${cancelReason}`,
+							notes: cancelReason,
 						},
 					});
-				}
+
+					return updatedPayment;
+				});
 
 				logger.info("Payment cancelled", {
 					paymentKey,
