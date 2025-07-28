@@ -48,6 +48,11 @@ export const orderRouter = router({
 						id: { in: productIds },
 						isActive: true,
 					},
+					include: {
+						productVariants: {
+							where: { isActive: true },
+						},
+					},
 				});
 
 				if (products.length !== productIds.length) {
@@ -57,7 +62,7 @@ export const orderRouter = router({
 					});
 				}
 
-				// 재고 확인
+				// 재고 확인 및 상품 변형 검증
 				for (const item of items) {
 					const product = products.find((p) => p.id === item.productId);
 					if (!product) continue;
@@ -68,12 +73,37 @@ export const orderRouter = router({
 							message: `${product.name}의 재고가 부족합니다 (재고: ${product.stock}개)`,
 						});
 					}
+
+					// 선택된 옵션 검증
+					if (item.selectedOptions) {
+						for (const [optionKey, optionValue] of Object.entries(
+							item.selectedOptions,
+						)) {
+							const matches = product.productVariants.some(
+								(variant) =>
+									variant.type.toLowerCase() === optionKey.toLowerCase() &&
+									variant.value === optionValue,
+							);
+							if (!matches) {
+								throw new TRPCError({
+									code: "BAD_REQUEST",
+									message: `Invalid option ${optionKey}: ${optionValue} for product ${product.name}`,
+								});
+							}
+						}
+					}
 				}
 
 				// 총 금액 계산
 				let totalAmount = 0;
 				const orderItems = items.map((item) => {
-					const product = products.find((p) => p.id === item.productId)!;
+					const product = products.find((p) => p.id === item.productId);
+					if (!product) {
+						throw new TRPCError({
+							code: "BAD_REQUEST",
+							message: "상품 정보를 찾을 수 없습니다",
+						});
+					}
 					const itemTotal = product.price * item.quantity;
 					totalAmount += itemTotal;
 
@@ -91,54 +121,59 @@ export const orderRouter = router({
 				// 배송비 계산 (예: 50000원 이상 무료배송)
 				const shippingFee = totalAmount >= 50000 ? 0 : 3000;
 
-				// 주문 생성
-				const order = await prisma.order.create({
-					data: {
-						orderNumber: generateOrderNumber(),
-						userId: ctx.user.id,
-						addressId,
-						totalAmount,
-						shippingFee,
-						notes,
-						items: {
-							create: orderItems,
-						},
-						statusHistory: {
-							create: {
-								status: "PENDING",
-								notes: "주문 생성",
-							},
-						},
-					},
-					include: {
-						items: {
-							include: {
-								product: true,
-							},
-						},
-						address: true,
-						statusHistory: true,
-					},
-				});
-
-				// 재고 차감
-				for (const item of items) {
-					await prisma.product.update({
-						where: { id: item.productId },
+				// 트랜잭션으로 주문 생성, 재고 차감, 장바구니 삭제를 원자적으로 처리
+				const order = await prisma.$transaction(async (tx) => {
+					// 1. 주문 생성
+					const createdOrder = await tx.order.create({
 						data: {
-							stock: {
-								decrement: item.quantity,
+							orderNumber: generateOrderNumber(),
+							userId: ctx.user.id,
+							addressId,
+							totalAmount,
+							shippingFee,
+							notes,
+							items: {
+								create: orderItems,
 							},
+							statusHistory: {
+								create: {
+									status: "PENDING",
+									notes: "주문 생성",
+								},
+							},
+						},
+						include: {
+							items: {
+								include: {
+									product: true,
+								},
+							},
+							address: true,
+							statusHistory: true,
 						},
 					});
-				}
 
-				// 장바구니에서 주문한 상품들 제거
-				await prisma.cartItem.deleteMany({
-					where: {
-						userId: ctx.user.id,
-						productId: { in: productIds },
-					},
+					// 2. 재고 차감
+					for (const item of items) {
+						await tx.product.update({
+							where: { id: item.productId },
+							data: {
+								stock: {
+									decrement: item.quantity,
+								},
+							},
+						});
+					}
+
+					// 3. 장바구니에서 주문한 상품들 제거
+					await tx.cartItem.deleteMany({
+						where: {
+							userId: ctx.user.id,
+							productId: { in: productIds },
+						},
+					});
+
+					return createdOrder;
 				});
 
 				logger.info("Order created", {
