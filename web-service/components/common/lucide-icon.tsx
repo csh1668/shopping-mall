@@ -9,7 +9,7 @@ export interface LucideIconProps extends HTMLAttributes<HTMLOrSVGElement> {
 	size?: string;
 }
 
-export default function LucideIcon({ name, ...props }: LucideIconProps) {
+export function LucideIcon({ name, ...props }: LucideIconProps) {
 	const Icon = icons[name];
 
 	return <Icon className={cn(props.className)} {...props} />;

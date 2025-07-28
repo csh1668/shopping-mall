@@ -2,8 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import LucideIcon from "@/components/lucide-icon";
-import { Badge } from "@/components/ui/badge";
+import { LucideIcon } from "@/components/common";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -63,10 +62,7 @@ export function CartSidebar() {
 							<div className="flex-1 overflow-y-auto py-4">
 								<div className="space-y-4">
 									{items.map((item) => (
-										<div
-											key={`${item.id}-${item.selectedColor}-${item.selectedSize}`}
-											className="flex gap-4"
-										>
+										<div key={item.id} className="flex gap-4">
 											<div className="relative w-16 h-16 flex-shrink-0">
 												<Image
 													src={
@@ -85,21 +81,6 @@ export function CartSidebar() {
 												<p className="text-xs text-muted-foreground">
 													{item.brand}
 												</p>
-
-												{(item.selectedColor || item.selectedSize) && (
-													<div className="flex gap-2 mt-1">
-														{item.selectedColor && (
-															<Badge variant="outline" className="text-xs">
-																{item.selectedColor}
-															</Badge>
-														)}
-														{item.selectedSize && (
-															<Badge variant="outline" className="text-xs">
-																{item.selectedSize}
-															</Badge>
-														)}
-													</div>
-												)}
 
 												<div className="flex items-center justify-between mt-2">
 													<div className="flex items-center gap-2">
@@ -186,9 +167,6 @@ export function CartSidebar() {
 										<Button variant="outline" className="w-full bg-transparent">
 											장바구니 보기
 										</Button>
-									</Link>
-									<Link href="/checkout" onClick={closeCart}>
-										<Button className="w-full">주문하기</Button>
 									</Link>
 								</div>
 							</div>

@@ -82,4 +82,28 @@ export const userRouter = router({
 				});
 			}
 		}),
+
+	// 사용자 주소 목록 조회
+	getAddresses: protectedProcedure.query(async ({ ctx }) => {
+		const user = ctx.user;
+
+		try {
+			const addresses = await prisma.address.findMany({
+				where: {
+					userId: user.id,
+				},
+				orderBy: [
+					{ isDefault: "desc" }, // 기본 주소를 먼저
+					{ createdAt: "desc" },
+				],
+			});
+
+			return addresses;
+		} catch (_error) {
+			throw new TRPCError({
+				code: "INTERNAL_SERVER_ERROR",
+				message: "주소 목록 조회에 실패했습니다.",
+			});
+		}
+	}),
 });

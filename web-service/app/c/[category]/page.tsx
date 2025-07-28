@@ -1,8 +1,8 @@
 import type { inferRouterOutputs } from "@trpc/server";
 import { notFound } from "next/navigation";
+import CategoryClient from "@/components/features/category/category-client";
 import type { AppRouter } from "@/server/router";
 import { sTrpc } from "@/server/server";
-import CategoryClient from "./category-client";
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
 

@@ -3,8 +3,8 @@
 import { ArrowLeft, Edit, MapPin, Plus, Star, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { AddressForm } from "@/components/address-form";
-import { AuthGuard } from "@/components/auth-guard";
+import { AuthGuard } from "@/components/common/auth-guard";
+import { AddressForm } from "@/components/forms/address-form";
 import {
 	AlertDialog,
 	AlertDialogAction,

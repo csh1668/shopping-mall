@@ -9,7 +9,7 @@ interface RelatedProductsProps {
 	currentProductId: string;
 }
 
-export default async function RelatedProducts({
+export async function RelatedProducts({
 	categoryId,
 	// biome-ignore lint/correctness/noUnusedFunctionParameters: 추후 사용 예정
 	currentProductId,

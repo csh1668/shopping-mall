@@ -13,10 +13,10 @@
 
 ### 🎯 프론트엔드
 [![frontend](https://skillicons.dev/icons?i=nextjs,ts,tailwind,react)](https://skillicons.dev)
-- **[Next.js 15](https://nextjs.org/)** - 리액트 기반 풀스택 라이브러리
+- **[Next.js 15](https://nextjs.org/)** - 리액트 기반 풀스택 프레임워크
 - **[TypeScript](https://www.typescriptlang.org/)** - 타입 안정성
 - **[Tailwind CSS](https://tailwindcss.com/)** - 유틸리티 기반 스타일링
-- **[shadcn/ui](https://ui.shadcn.com/)** - 모던한 UI 컴포넌트 라이브러리
+- **[shadcn/ui](https://ui.shadcn.com/)** - 모던한 UI 컴포넌트 컬렉션
 
 ### 🔧 백엔드 & 데이터베이스
 [![backend](https://skillicons.dev/icons?i=prisma,supabase,postgres)](https://skillicons.dev)

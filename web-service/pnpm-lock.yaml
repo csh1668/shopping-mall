@@ -104,6 +104,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.81.5
         version: 5.82.0(react@19.1.0)
+      '@tosspayments/tosspayments-sdk':
+        specifier: ^2.3.5
+        version: 2.3.5
       '@trpc/client':
         specifier: ^11.4.3
         version: 11.4.3(@trpc/server@11.4.3(typescript@5.8.3))(typescript@5.8.3)
@@ -1397,6 +1400,9 @@ packages:
     resolution: {integrity: sha512-mnk8/ofKEthFeMdhV1dV8YXRf+9HqvXAcciXkoo755d/ocfWq7N/Y9jGOzS3h7ZW9dDGwSIhs3/HANWUBsyqYg==}
     peerDependencies:
       react: ^18 || ^19
+
+  '@tosspayments/tosspayments-sdk@2.3.5':
+    resolution: {integrity: sha512-XHi6e9LrF02vm4vuhrt8B4BaDUuyL0sQtdp21HITCUFdyRRB+lQKLZSRcBb8VTpymrCISlg/j8mT2r/QlJmipg==}
 
   '@trpc/client@11.4.3':
     resolution: {integrity: sha512-i2suttUCfColktXT8bqex5kHW5jpT15nwUh0hGSDiW1keN621kSUQKcLJ095blqQAUgB+lsmgSqSMmB4L9shQQ==}
@@ -3494,6 +3500,8 @@ snapshots:
     dependencies:
       '@tanstack/query-core': 5.82.0
       react: 19.1.0
+
+  '@tosspayments/tosspayments-sdk@2.3.5': {}
 
   '@trpc/client@11.4.3(@trpc/server@11.4.3(typescript@5.8.3))(typescript@5.8.3)':
     dependencies:

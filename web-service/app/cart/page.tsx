@@ -3,17 +3,18 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import LucideIcon from "@/components/lucide-icon";
+import { LucideIcon } from "@/components/common/lucide-icon";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 import { useCartStore } from "@/stores/cart-store";
 
 const recommendedProducts = [
 	{
-		id: 11,
+		id: "11",
 		name: "무선 충전패드",
 		price: 45000,
 		originalPrice: 59000,
@@ -23,7 +24,7 @@ const recommendedProducts = [
 		inStock: true,
 	},
 	{
-		id: 12,
+		id: "12",
 		name: "스마트폰 케이스",
 		price: 25000,
 		originalPrice: 35000,
@@ -33,7 +34,7 @@ const recommendedProducts = [
 		inStock: true,
 	},
 	{
-		id: 13,
+		id: "13",
 		name: "블루투스 키보드",
 		price: 89000,
 		originalPrice: 120000,
@@ -55,7 +56,7 @@ export default function CartPage() {
 		addItem,
 	} = useCartStore();
 
-	const [selectedItems, setSelectedItems] = useState<number[]>(
+	const [selectedItems, setSelectedItems] = useState<string[]>(
 		items.map((item) => item.id),
 	);
 	const [couponCode, setCouponCode] = useState("");
@@ -63,6 +64,7 @@ export default function CartPage() {
 		code: string;
 		discount: number;
 	} | null>(null);
+	const { toast } = useToast();
 
 	const totalPrice = getTotalPrice();
 	const originalTotalPrice = getOriginalTotalPrice();
@@ -81,7 +83,7 @@ export default function CartPage() {
 		}
 	};
 
-	const handleSelectItem = (itemId: number, checked: boolean) => {
+	const handleSelectItem = (itemId: string, checked: boolean) => {
 		if (checked) {
 			setSelectedItems([...selectedItems, itemId]);
 		} else {
@@ -106,7 +108,11 @@ export default function CartPage() {
 			setAppliedCoupon({ code: couponCode, discount });
 			setCouponCode("");
 		} else {
-			alert("유효하지 않은 쿠폰 코드입니다.");
+			toast({
+				title: "유효하지 않은 쿠폰 코드입니다.",
+				description: "유효하지 않은 쿠폰 코드입니다.",
+				variant: "destructive",
+			});
 		}
 	};
 
@@ -185,9 +191,7 @@ export default function CartPage() {
 						{/* Cart Items List */}
 						<div className="space-y-4">
 							{items.map((item) => (
-								<Card
-									key={`${item.id}-${item.selectedColor}-${item.selectedSize}`}
-								>
+								<Card key={item.id}>
 									<CardContent className="p-6">
 										<div className="flex gap-4">
 											<Checkbox
@@ -409,7 +413,7 @@ export default function CartPage() {
 								)}
 
 								<div className="mt-6 space-y-3">
-									<Link href="/checkout">
+									<Link href={`/order/create?items=${selectedItems.join(",")}`}>
 										<Button
 											className="w-full"
 											size="lg"
