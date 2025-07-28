@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 import { useCartStore } from "@/stores/cart-store";
 
 const recommendedProducts = [
@@ -63,6 +64,7 @@ export default function CartPage() {
 		code: string;
 		discount: number;
 	} | null>(null);
+	const { toast } = useToast();
 
 	const totalPrice = getTotalPrice();
 	const originalTotalPrice = getOriginalTotalPrice();
@@ -106,7 +108,11 @@ export default function CartPage() {
 			setAppliedCoupon({ code: couponCode, discount });
 			setCouponCode("");
 		} else {
-			alert("유효하지 않은 쿠폰 코드입니다.");
+			toast({
+				title: "유효하지 않은 쿠폰 코드입니다.",
+				description: "유효하지 않은 쿠폰 코드입니다.",
+				variant: "destructive",
+			});
 		}
 	};
 

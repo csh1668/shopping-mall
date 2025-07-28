@@ -10,12 +10,15 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 import { publicEnv } from "@/public-env";
 import { trpc } from "@/server/client";
+import type { CartItem } from "@/stores/cart-store";
 import { usePaymentStore } from "@/stores/payment-store";
 
 interface CreateOrderFormProps {
-	selectedItems: any[];
+	selectedItems: CartItem[];
 	totalAmount: number;
 	shippingFee: number;
 }
@@ -27,6 +30,8 @@ export function CreateOrderForm({
 }: CreateOrderFormProps) {
 	const router = useRouter();
 	const { openPaymentModal } = usePaymentStore();
+	const { toast } = useToast();
+	const { user } = useAuth();
 
 	const [selectedAddressId, setSelectedAddressId] = useState("");
 	const [notes, setNotes] = useState("");
@@ -40,12 +45,20 @@ export function CreateOrderForm({
 
 	const handleCreateOrder = async () => {
 		if (!selectedAddressId) {
-			alert("배송지를 선택해주세요.");
+			toast({
+				title: "배송지를 선택해주세요.",
+				description: "배송지를 선택해주세요.",
+				variant: "destructive",
+			});
 			return;
 		}
 
 		if (selectedItems.length === 0) {
-			alert("주문할 상품을 선택해주세요.");
+			toast({
+				title: "주문할 상품을 선택해주세요.",
+				description: "주문할 상품을 선택해주세요.",
+				variant: "destructive",
+			});
 			return;
 		}
 
@@ -56,12 +69,8 @@ export function CreateOrderForm({
 			const order = await createOrderMutation.mutateAsync({
 				addressId: selectedAddressId,
 				items: selectedItems.map((item) => ({
-					productId: item.productId || item.id.toString(),
+					productId: item.id,
 					quantity: item.quantity,
-					selectedOptions: {
-						color: item.selectedColor,
-						size: item.selectedSize,
-					},
 				})),
 				notes: notes || undefined,
 			});
@@ -77,13 +86,17 @@ export function CreateOrderForm({
 				orderId: order.id,
 				orderName,
 				amount: totalAmount + shippingFee,
-				customerKey: "ANONYMOUS", // 또는 사용자 ID
-				successUrl: `${publicEnv.NEXT_PUBLIC_SITE_URL}/payment/success`,
-				failUrl: `${publicEnv.NEXT_PUBLIC_SITE_URL}/payment/fail`,
+				customerKey: user ? user.id : "ANONYMOUS",
+				successUrl: `${window.location.origin}/payment/success`,
+				failUrl: `${window.location.origin}/payment/fail`,
 			});
 		} catch (error) {
 			console.error("주문 생성 실패:", error);
-			alert("주문 생성에 실패했습니다. 다시 시도해주세요.");
+			toast({
+				title: "주문 생성에 실패했습니다. 다시 시도해주세요.",
+				description: "주문 생성에 실패했습니다. 다시 시도해주세요.",
+				variant: "destructive",
+			});
 		} finally {
 			setIsCreating(false);
 		}
@@ -194,14 +207,14 @@ export function CreateOrderForm({
 								</div>
 								<div className="flex-1">
 									<h4 className="font-medium">{item.name}</h4>
-									<div className="text-sm text-muted-foreground">
+									{/* <div className="text-sm text-muted-foreground">
 										{item.selectedColor && (
 											<span>색상: {item.selectedColor} </span>
 										)}
 										{item.selectedSize && (
 											<span>사이즈: {item.selectedSize}</span>
 										)}
-									</div>
+									</div> */}
 									<p className="text-sm">수량: {item.quantity}개</p>
 								</div>
 								<div className="text-right">

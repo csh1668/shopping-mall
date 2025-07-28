@@ -7,20 +7,22 @@ import { CreateOrderForm } from "@/components/order/create-order-form";
 import { PaymentModal } from "@/components/payment/payment-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useCartStore } from "@/stores/cart-store";
+import { type CartItem, useCartStore } from "@/stores/cart-store";
 
 export function CreateOrderPageContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const { items } = useCartStore();
 
-	const [selectedItems, setSelectedItems] = useState<any[]>([]);
+	const [selectedItems, setSelectedItems] = useState<CartItem[]>([]);
 	const [totalAmount, setTotalAmount] = useState(0);
 	const [shippingFee, setShippingFee] = useState(0);
 
 	useEffect(() => {
-		// URL 파라미터에서 선택된 아이템 ID들을 가져옴
-		const selectedIds = searchParams.get("items")?.split(",") || [];
+		const itemsParam = searchParams.get("items");
+		if (!itemsParam) return;
+
+		const selectedIds = itemsParam.split(",").filter((id) => id.trim());
 
 		if (selectedIds.length === 0 || items.length === 0) {
 			return;

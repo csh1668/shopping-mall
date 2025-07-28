@@ -64,6 +64,7 @@ export function AddressForm({ address, onSubmit, onCancel }: AddressFormProps) {
 	};
 
 	const handleAddressSearch = () => {
+		// TODO: 주소 검색 기능 구현
 		// 실제로는 다음 우편번호 API 등을 사용
 		alert("주소 검색 기능은 실제 서비스에서 구현됩니다.");
 	};
