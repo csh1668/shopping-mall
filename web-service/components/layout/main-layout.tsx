@@ -2,6 +2,7 @@
 
 import type React from "react";
 import { CartSidebar } from "@/components/features/cart/cart-sidebar";
+import { Toaster } from "@/components/ui/toaster";
 import { Footer } from "./footer";
 import { Header } from "./header";
 
@@ -18,6 +19,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 			</main>
 			<Footer />
 			<CartSidebar />
+			<Toaster />
 		</div>
 	);
 }
