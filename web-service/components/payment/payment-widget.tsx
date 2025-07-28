@@ -72,15 +72,20 @@ export function PaymentWidget({
 
 	useEffect(() => {
 		async function renderPaymentMethods() {
-			await paymentWidget?.renderPaymentMethods({
-				selector: "#payment-methods",
-				variantKey: "DEFAULT",
-			});
-
-			await paymentWidget?.renderAgreement({
-				selector: "#agreement",
-				variantKey: "AGREEMENT",
-			});
+			try {
+				Promise.all([
+					paymentWidget?.renderPaymentMethods({
+						selector: "#payment-methods",
+						variantKey: "DEFAULT",
+					}),
+					paymentWidget?.renderAgreement({
+						selector: "#agreement",
+						variantKey: "AGREEMENT",
+					}),
+				]);
+			} catch (error) {
+				console.error("결제 위젯 렌더링 실패:", error);
+			}
 		}
 
 		renderPaymentMethods();

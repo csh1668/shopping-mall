@@ -10,6 +10,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import { useTossPayments } from "@/hooks/use-toss-payments";
 import { usePaymentStore } from "@/stores/payment-store";
 
@@ -20,6 +21,7 @@ export function PaymentModal() {
 		closePaymentModal,
 		resetPaymentState,
 	} = usePaymentStore();
+	const { toast } = useToast();
 
 	const {
 		isWidgetLoading,
@@ -78,7 +80,11 @@ export function PaymentModal() {
 			await requestPayment(paymentData);
 		} catch (error) {
 			console.error("결제 요청 실패:", error);
-			// 에러 처리 - 토스트나 알럿으로 사용자에게 알림
+			toast({
+				title: "결제 요청에 실패했습니다. 다시 시도해주세요.",
+				description: `${error}`,
+				variant: "destructive",
+			});
 		}
 	};
 
