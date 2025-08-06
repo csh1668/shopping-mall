@@ -1,8 +1,10 @@
+import { loggerLink } from "@trpc/client";
 import {
 	createTRPCClient,
 	createTRPCReact,
 	httpBatchLink,
 } from "@trpc/react-query";
+import superjson from "superjson";
 import { createLogger } from "@/lib/logger";
 import { supabase } from "@/lib/supabase-client";
 import type { AppRouter } from "./router";
@@ -15,8 +17,15 @@ export const trpc = createTRPCReact<AppRouter>();
 // tRPC Vanilla Client
 export const vTrpc = createTRPCClient<AppRouter>({
 	links: [
+		loggerLink({
+			enabled: () =>
+				typeof window !== "undefined" && process.env.NODE_ENV === "development",
+			colorMode: "css",
+			withContext: true,
+		}),
 		httpBatchLink({
 			url: "/api/trpc",
+			transformer: superjson,
 			async headers() {
 				try {
 					// 현재 세션에서 access_token 가져오기

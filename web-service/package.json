@@ -69,6 +69,7 @@
 		"react-resizable-panels": "^2.1.7",
 		"recharts": "2.15.0",
 		"sonner": "^1.7.1",
+		"superjson": "2.2.2",
 		"tailwind-merge": "^2.5.5",
 		"tailwindcss-animate": "^1.0.7",
 		"use-sync-external-store": "latest",

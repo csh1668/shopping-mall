@@ -1,10 +1,13 @@
 import type { User } from "@supabase/supabase-js";
 import { initTRPC, TRPCError } from "@trpc/server";
+import superjson from "superjson";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+// Note: server-env import removed as server-side tRPC logging is disabled.
 import type { Context } from "./context";
 
 const t = initTRPC.context<Context>().create({
+	transformer: superjson,
 	errorFormatter: ({ shape, error }) => {
 		return {
 			...shape,
@@ -40,7 +43,6 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
 	});
 });
 
-// 관리자 권한 체크 미들웨어
 const enforceUserIsAdmin = t.middleware(async ({ ctx, next }) => {
 	if (!ctx.isAuthenticated || !ctx.user) {
 		throw new TRPCError({
@@ -75,6 +77,9 @@ const enforceUserIsAdmin = t.middleware(async ({ ctx, next }) => {
 });
 
 export const router = t.router;
-export const publicProcedure = t.procedure;
-export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
-export const adminProcedure = t.procedure.use(enforceUserIsAdmin);
+
+const baseProcedure = t.procedure;
+
+export const publicProcedure = baseProcedure;
+export const protectedProcedure = baseProcedure.use(enforceUserIsAuthed);
+export const adminProcedure = baseProcedure.use(enforceUserIsAdmin);
