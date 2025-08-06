@@ -24,7 +24,6 @@ type ProductInfo = RouterOutput["product"]["getBySlug"];
 
 interface ProductClientProps {
 	product: ProductInfo;
-	discountRate: number;
 }
 
 // 애니메이션 설정
@@ -52,7 +51,13 @@ const itemVariants = {
 	},
 };
 
-export function ProductClient({ product, discountRate }: ProductClientProps) {
+export function ProductClient({ product }: ProductClientProps) {
+	// 할인율 계산
+	const discountRate = product.originalPrice
+		? Math.round(
+				((product.originalPrice - product.price) / product.originalPrice) * 100,
+			)
+		: 0;
 	const [quantity, setQuantity] = useState(1);
 	const [isWishlisted, setIsWishlisted] = useState(false);
 	const { addItem } = useCartStore();

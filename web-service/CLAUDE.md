@@ -17,6 +17,9 @@
 ### 백엔드 & 데이터베이스
 - **백엔드 서비스**: Supabase (인증, 데이터베이스, 실시간 기능)
 - **API**: tRPC 11.4.3 (타입 안전한 API)
+  - React Query 통합 및 Vanilla 클라이언트 지원
+  - 인증 및 관리자 권한 미들웨어
+  - Zod 스키마 기반 유효성 검사
 - **ORM**: Prisma (PostgreSQL)
 - **상태 관리**: Zustand, Tanstack React Query 5.81.5
 
@@ -45,6 +48,24 @@
 ├── lib/                  # 유틸리티 함수 및 설정
 ├── prisma/               # 데이터베이스 스키마 및 마이그레이션
 ├── server/               # tRPC 서버 설정 및 라우터
+│   ├── client.ts         # tRPC 클라이언트 (React & Vanilla)
+│   ├── context.ts        # tRPC 컨텍스트 생성 및 인증 처리
+│   ├── index.ts          # tRPC 초기화 및 미들웨어
+│   ├── router.ts         # 메인 라우터 설정
+│   ├── server.ts         # 서버사이드 헬퍼
+│   ├── routers/          # 도메인별 라우터
+│   │   ├── category.ts   # 카테고리 관련 API
+│   │   ├── example.ts    # 예제 API
+│   │   ├── order.ts      # 주문 관련 API
+│   │   ├── payment.ts    # 결제 관련 API
+│   │   ├── product.ts    # 상품 관련 API
+│   │   └── user.ts       # 사용자 관련 API
+│   └── schemas/          # Zod 스키마 정의
+│       ├── index.ts      # 공통 스키마
+│       ├── order.ts      # 주문 스키마
+│       ├── payment.ts    # 결제 스키마
+│       ├── product.ts    # 상품 스키마
+│       └── user.ts       # 사용자 스키마
 ├── stores/               # Zustand 상태 관리
 └── public/               # 정적 파일
 ```
@@ -78,21 +99,44 @@
 - **평점 및 리뷰 작성**: 1-5점 평점, 이미지 첨부
 - **도움됨 기능**: 리뷰 유용성 평가
 
+### 6. 결제 시스템
+- **토스페이먼츠 연동**: 다양한 결제 수단 지원
+- **결제 상태 관리**: 대기 → 완료 → 실패/취소/환불
+- **거래 추적**: paymentKey, transactionId 관리
+
+### 7. 위시리스트 시스템
+- **상품 찜하기**: 사용자별 위시리스트 관리
+- **중복 방지**: 사용자당 상품 하나씩만 등록
+
+### 8. 쿠폰 시스템
+- **할인 관리**: 고정 금액 또는 퍼센트 할인
+- **사용 제한**: 최소 주문 금액, 최대 할인, 사용 횟수 제한
+- **유효 기간**: 쿠폰 활성화 기간 관리
+
 ## 데이터베이스 스키마
 
 ### 주요 테이블
 - **UserMetadata**: 사용자 메타데이터 (Supabase auth.users 연동)
-- **Product**: 상품 정보
-- **Category**: 상품 카테고리 (계층 구조)
-- **Order**: 주문 정보
-- **CartItem**: 장바구니 아이템
-- **Review**: 상품 리뷰
 - **Address**: 배송지 정보
+- **Category**: 상품 카테고리 (계층 구조)
+- **Product**: 상품 정보 (브랜드, SKU, 재고 관리)
+- **ProductVariant**: 상품 변형 (색상, 사이즈, 소재 등)
+- **CartItem**: 장바구니 아이템 (선택 옵션 포함)
+- **WishlistItem**: 위시리스트 아이템
+- **Order**: 주문 정보 (할인, 배송비, 송장번호)
+- **OrderStatusHistory**: 주문 상태 변경 이력
+- **OrderItem**: 주문 상품 아이템 (선택 옵션 포함)
+- **Review**: 상품 리뷰 (평점, 이미지, 도움됨 기능)
+- **Payment**: 결제 정보 (토스페이먼츠 연동)
+- **Coupon**: 쿠폰 및 할인 관리
 
 ### 주요 Enum
 - **UserRole**: CUSTOMER, SELLER, ADMIN, SUPER_ADMIN
-- **OrderStatus**: PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED, REFUNDED
 - **VariantType**: COLOR, SIZE, MATERIAL, OTHER
+- **OrderStatus**: PENDING, CONFIRMED, PROCESSING, SHIPPED, DELIVERED, CANCELLED, REFUNDED
+- **PaymentStatus**: PENDING, PAID, FAILED, CANCELLED, REFUNDED, PARTIALLY_REFUNDED
+- **PaymentMethod**: CARD, TRANSFER, VIRTUAL_ACCOUNT, MOBILE, KAKAOPAY, NAVERPAY, TOSSPAY
+- **CouponType**: FIXED_AMOUNT, PERCENTAGE
 
 ## 개발 스크립트
 
@@ -120,13 +164,19 @@ pnpm postinstall
 
 ### 필수 환경 변수
 ```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+# Client-side
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_SUPABASE_URL="https://[PROJECT_ID].supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY=""
+NEXT_PUBLIC_TOSS_PAYMENTS_CLIENT_KEY="test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"
 
-# 데이터베이스
-DATABASE_URL=your_database_url
-DIRECT_URL=your_direct_database_url
+
+# Server-side
+NODE_ENV=development
+SUPABASE_SERVICE_ROLE_KEY=""
+DATABASE_URL="postgresql://[USERNAME]:[PASSWORD]@[URL]:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://[USERNAME]:[PASSWORD]@[URL]:5432/postgres"
+TOSS_PAYMENTS_SECRET_KEY="test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6"
 ```
 
 ## 개발 워크플로우
@@ -171,13 +221,47 @@ DIRECT_URL=your_direct_database_url
 - **Lazy Loading**: 컴포넌트 지연 로딩
 - **이미지 최적화**: Next.js Image 컴포넌트
 
+## tRPC 서버 아키텍처
+
+### 1. 컨텍스트 (Context)
+- **Supabase 인증**: 서버 클라이언트를 통한 사용자 인증 상태 관리
+- **세션 관리**: access_token 기반 인증 헤더 자동 처리
+- **타입 안전성**: TypeScript 타입 추론으로 컴파일 타임 검사
+
+### 2. 미들웨어 시스템
+- **enforceUserIsAuthed**: 로그인 필수 프로시저용 미들웨어
+- **enforceUserIsAdmin**: 관리자 권한 필수 프로시저용 미들웨어
+- **에러 포매팅**: Zod 유효성 검사 오류 자동 처리
+
+### 3. 프로시저 타입
+- **publicProcedure**: 인증 불필요한 공개 API
+- **protectedProcedure**: 로그인 필요한 보호된 API  
+- **adminProcedure**: 관리자 권한 필요한 API
+
+### 4. 클라이언트 지원
+- **React Hooks (trpc)**: 컴포넌트에서 사용하는 React Query 기반 훅
+- **Vanilla Client (vTrpc)**: 서버 액션 등에서 사용하는 일반 클라이언트
+- **Server Helpers (sTrpc)**: 서버사이드 렌더링용 헬퍼
+
+### 5. 도메인별 라우터
+- **user**: 사용자 관리 (프로필, 권한)
+- **product**: 상품 관리 (목록, 상세, 검색)
+- **category**: 카테고리 관리 (계층 구조)
+- **order**: 주문 관리 (생성, 상태 변경, 이력)
+- **payment**: 결제 처리 (토스페이먼츠 연동)
+
+### 6. 스키마 검증
+- **공통 스키마**: ID, UUID, 페이지네이션, 검색
+- **도메인별 스키마**: 각 라우터에 대응하는 입력/출력 스키마
+- **Zod 통합**: 런타임 타입 검사 및 에러 메시지
+
 ## 추가 개발 예정 기능
 
-- 결제 시스템 (토스페이먼츠 연동)
-- 쿠폰 및 할인 시스템
 - 실시간 알림 기능
 - 관리자 대시보드
 - 다국어 지원
+- 상품 추천 시스템
+- 재고 부족 알림
 
 ## Golden Rules
 
