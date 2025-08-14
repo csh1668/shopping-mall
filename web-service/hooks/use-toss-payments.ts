@@ -101,26 +101,25 @@ export function useTossPayments() {
 				setProcessing(true);
 
 				// 결제 데이터 생성 (서버에서)
-				await createPaymentMutation.mutateAsync({
+				const created = await createPaymentMutation.mutateAsync({
 					orderId: data.orderId,
-					successUrl: data.successUrl,
-					failUrl: data.failUrl,
 				});
 
 				// 토스페이먼츠 결제 요청
 				await paymentWidget.requestPayment({
-					orderId: data.orderId,
-					orderName: data.orderName,
-					successUrl: data.successUrl,
-					failUrl: data.failUrl,
-					customerEmail: undefined, // 선택사항
-					customerName: undefined, // 선택사항
-					customerMobilePhone: undefined, // 선택사항
+					orderId: created.orderId,
+					orderName: created.orderName,
+					successUrl: created.successUrl,
+					failUrl: created.failUrl,
+					customerEmail: undefined,
+					customerName: undefined,
+					customerMobilePhone: undefined,
 				});
 			} catch (error) {
 				console.error("결제 요청 실패:", error);
-				setProcessing(false);
 				throw error;
+			} finally {
+				setProcessing(false);
 			}
 		},
 		[paymentWidget, setProcessing, createPaymentMutation],

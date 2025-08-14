@@ -1,9 +1,11 @@
+import type { Prisma } from "@prisma/client";
 import { PaymentMethod, PaymentStatus } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { prisma } from "@/lib/prisma";
+import { cancelTossPayment, confirmTossPayment } from "@/lib/toss-payments";
 import { serverEnv } from "@/server-env";
 import { createLogger } from "../../lib/logger";
-import { protectedProcedure, publicProcedure, router } from "../index";
+import { protectedProcedure, router } from "../index";
 import {
 	cancelPaymentSchema,
 	confirmPaymentSchema,
@@ -13,174 +15,17 @@ import {
 
 const logger = createLogger("PaymentRouter");
 
-// 지연 함수
-function delay(ms: number): Promise<void> {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-// 재시도 가능한 에러인지 확인
-function isRetryableError(error: unknown, status?: number): boolean {
-	// 네트워크 에러
-	if (error instanceof TypeError && error.message.includes("fetch")) {
-		return true;
-	}
-
-	// 타임아웃 에러
-	if (error instanceof Error && error.name === "AbortError") {
-		return true;
-	}
-
-	// 5xx 서버 에러
-	if (status && status >= 500) {
-		return true;
-	}
-
-	// 429 Too Many Requests
-	if (status === 429) {
-		return true;
-	}
-
-	return false;
-}
-
-// 토스페이먼츠 API 클라이언트 함수
-async function tossPaymentsRequest(
-	endpoint: string,
-	method: string = "GET",
-	body?: Record<string, unknown>,
-	options: {
-		timeout?: number;
-		maxRetries?: number;
-		retryDelay?: number;
-	} = {},
-) {
-	const {
-		timeout = 10000, // 10초 타임아웃
-		maxRetries = 3,
-		retryDelay = 1000, // 1초 지연
-	} = options;
-
-	const secretKey = serverEnv.TOSS_PAYMENTS_SECRET_KEY;
-	const url = `https://api.tosspayments.com/v1/${endpoint}`;
-
-	for (let attempt = 0; attempt <= maxRetries; attempt++) {
-		const abortController = new AbortController();
-		const timeoutId = setTimeout(() => abortController.abort(), timeout);
-
-		try {
-			const requestOptions: RequestInit = {
-				method,
-				headers: {
-					Authorization: `Basic ${Buffer.from(`${secretKey}:`).toString("base64")}`,
-					"Content-Type": "application/json",
-				},
-				signal: abortController.signal,
-			};
-
-			if (body && method !== "GET") {
-				requestOptions.body = JSON.stringify(body);
-			}
-
-			logger.info("Toss Payments API request", {
-				attempt: attempt + 1,
-				endpoint,
-				method,
-				timeout,
-			});
-
-			const response = await fetch(url, requestOptions);
-			clearTimeout(timeoutId);
-
-			const data = await response.json();
-
-			if (!response.ok) {
-				const error = new Error(
-					`Toss Payments API error: ${data.message || response.statusText}`,
-				);
-
-				logger.error("Toss Payments API error", {
-					attempt: attempt + 1,
-					status: response.status,
-					error: data,
-					endpoint,
-					method,
-				});
-
-				// 재시도 불가능한 에러이거나 마지막 시도인 경우 에러 던지기
-				if (
-					!isRetryableError(error, response.status) ||
-					attempt === maxRetries
-				) {
-					throw error;
-				}
-
-				// 재시도 가능한 에러인 경우 다음 시도 진행
-				if (attempt < maxRetries) {
-					const delayMs = retryDelay * 2 ** attempt; // 지수 백오프
-					logger.warn("Retrying Toss Payments API request", {
-						attempt: attempt + 1,
-						nextAttemptIn: delayMs,
-						status: response.status,
-					});
-					await delay(delayMs);
-					continue;
-				}
-			}
-
-			logger.info("Toss Payments API request successful", {
-				attempt: attempt + 1,
-				endpoint,
-				method,
-				status: response.status,
-			});
-
-			return data;
-		} catch (error) {
-			clearTimeout(timeoutId);
-
-			logger.error("Toss Payments API request failed", {
-				attempt: attempt + 1,
-				endpoint,
-				method,
-				error: error instanceof Error ? error.message : error,
-			});
-
-			// 재시도 불가능한 에러이거나 마지막 시도인 경우 에러 던지기
-			if (!isRetryableError(error) || attempt === maxRetries) {
-				throw error;
-			}
-
-			// 재시도 가능한 에러인 경우 다음 시도 진행
-			if (attempt < maxRetries) {
-				const delayMs = retryDelay * 2 ** attempt; // 지수 백오프
-				logger.warn("Retrying Toss Payments API request after error", {
-					attempt: attempt + 1,
-					nextAttemptIn: delayMs,
-					error: error instanceof Error ? error.message : error,
-				});
-				await delay(delayMs);
-			}
-		}
-	}
-
-	// 이 코드에 도달하면 안 되지만, 타입스크립트를 위해 추가
-	throw new Error("Maximum retry attempts exceeded");
-}
+// (old retry helpers removed; retries are handled upstream if needed)
 
 export const paymentRouter = router({
-	// 결제 요청 생성
-	create: publicProcedure
+	// 결제 요청 생성 (인증 필요)
+	create: protectedProcedure
 		.input(createPaymentSchema)
 		.mutation(async ({ input, ctx }) => {
-			const {
-				orderId,
-				customerKey: inputCustomerKey,
-				successUrl,
-				failUrl,
-			} = input;
+			const { orderId } = input;
 
 			try {
-				// 주문 정보 조회
+				// 주문 정보 조회 및 소유자 검증
 				const order = await prisma.order.findUnique({
 					where: { id: orderId },
 					include: {
@@ -197,6 +42,13 @@ export const paymentRouter = router({
 					throw new TRPCError({
 						code: "NOT_FOUND",
 						message: "주문을 찾을 수 없습니다",
+					});
+				}
+
+				if (order.userId !== ctx.user.id) {
+					throw new TRPCError({
+						code: "FORBIDDEN",
+						message: "해당 주문에 대한 결제 권한이 없습니다",
 					});
 				}
 
@@ -223,13 +75,13 @@ export const paymentRouter = router({
 						orderName: existingPayment.orderName,
 						amount: existingPayment.amount,
 						customerKey: existingPayment.customerKey,
-						successUrl,
-						failUrl,
+						successUrl: `${serverEnv.NEXT_PUBLIC_SITE_URL}/payment/success`,
+						failUrl: `${serverEnv.NEXT_PUBLIC_SITE_URL}/payment/fail`,
 					};
 				}
 
-				// customerKey 설정 (로그인 사용자 또는 ANONYMOUS)
-				const customerKey = inputCustomerKey || ctx.user?.id || "ANONYMOUS";
+				// customerKey는 서버에서 신뢰 가능한 값으로 설정 (현재 사용자 ID 고정)
+				const customerKey = ctx.user.id;
 
 				// 주문명 생성
 				const orderName =
@@ -270,8 +122,8 @@ export const paymentRouter = router({
 					orderName: payment.orderName,
 					amount: payment.amount,
 					customerKey: payment.customerKey,
-					successUrl,
-					failUrl,
+					successUrl: `${serverEnv.NEXT_PUBLIC_SITE_URL}/payment/success`,
+					failUrl: `${serverEnv.NEXT_PUBLIC_SITE_URL}/payment/fail`,
 				};
 			} catch (error) {
 				logger.error("Failed to create payment", { orderId, error });
@@ -282,13 +134,33 @@ export const paymentRouter = router({
 			}
 		}),
 
-	// 결제 승인
-	confirm: publicProcedure
+	// 결제 승인 (인증 필요)
+	confirm: protectedProcedure
 		.input(confirmPaymentSchema)
 		.mutation(async ({ input, ctx }) => {
 			const { paymentKey, orderId, amount } = input;
 
 			try {
+				// 주문 소유자 검증
+				const orderOwner = await prisma.order.findUnique({
+					where: { id: orderId },
+					select: { userId: true },
+				});
+
+				if (!orderOwner) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "주문을 찾을 수 없습니다",
+					});
+				}
+
+				if (orderOwner.userId !== ctx.user.id) {
+					throw new TRPCError({
+						code: "FORBIDDEN",
+						message: "해당 주문에 대한 결제 권한이 없습니다",
+					});
+				}
+
 				// 기존 결제 정보 조회
 				const payment = await prisma.payment.findUnique({
 					where: { orderId },
@@ -301,6 +173,19 @@ export const paymentRouter = router({
 					});
 				}
 
+				// 이미 결제가 완료된 경우, 외부 승인 요청을 생략하고 빠르게 반환 (멱등성 강화)
+				if (payment.status === PaymentStatus.PAID) {
+					logger.info("Payment already confirmed, skipping confirm call", {
+						orderId,
+						paymentKey,
+					});
+					return {
+						success: true,
+						payment,
+						tossResponse: null,
+					};
+				}
+
 				// 금액 검증
 				if (payment.amount !== amount) {
 					throw new TRPCError({
@@ -310,15 +195,11 @@ export const paymentRouter = router({
 				}
 
 				// 토스페이먼츠 결제 승인 요청
-				const tossResponse = await tossPaymentsRequest(
-					"payments/confirm",
-					"POST",
-					{
-						paymentKey,
-						orderId,
-						amount,
-					},
-				);
+				const tossResponse = await confirmTossPayment({
+					paymentKey,
+					orderId,
+					amount,
+				});
 
 				// PaymentMethod 매핑
 				let paymentMethod: PaymentMethod | null = null;
@@ -345,7 +226,7 @@ export const paymentRouter = router({
 							status: PaymentStatus.PAID,
 							method: paymentMethod,
 							approvedAt: new Date(tossResponse.approvedAt),
-							rawData: tossResponse,
+							rawData: tossResponse as unknown as Prisma.InputJsonValue,
 						},
 					}),
 					prisma.order.update({
@@ -362,16 +243,13 @@ export const paymentRouter = router({
 				]);
 
 				logger.info("Payment confirmed", {
+					paymentId: updatedPayment.id,
 					paymentKey,
 					orderId,
 					amount,
 				});
 
-				return {
-					success: true,
-					payment: updatedPayment,
-					tossResponse,
-				};
+				return { success: true, payment: updatedPayment };
 			} catch (error) {
 				logger.error("Failed to confirm payment", {
 					paymentKey,
@@ -379,15 +257,16 @@ export const paymentRouter = router({
 					error,
 				});
 
-				// 결제 실패 상태 업데이트
-				await prisma.payment.update({
-					where: { orderId },
-					data: {
-						status: PaymentStatus.FAILED,
-						failReason:
-							error instanceof Error ? error.message : "결제 승인 실패",
-					},
-				});
+				// 결제 실패 상태 업데이트: 일시 오류 고려하여 FAILED로 마킹하지 않음
+				try {
+					await prisma.payment.update({
+						where: { orderId },
+						data: {
+							failReason:
+								error instanceof Error ? error.message : "결제 승인 실패",
+						},
+					});
+				} catch {}
 
 				throw new TRPCError({
 					code: "INTERNAL_SERVER_ERROR",
@@ -396,16 +275,17 @@ export const paymentRouter = router({
 			}
 		}),
 
-	// 결제 취소/환불
+	// 결제 취소/환불 (인증 필요)
 	cancel: protectedProcedure
 		.input(cancelPaymentSchema)
 		.mutation(async ({ input, ctx }) => {
 			const { paymentKey, cancelReason, cancelAmount } = input;
 
 			try {
-				// 기존 결제 정보 조회
+				// 기존 결제 정보 조회 및 소유자 검증
 				const payment = await prisma.payment.findUnique({
 					where: { paymentKey },
+					include: { order: true },
 				});
 
 				if (!payment) {
@@ -422,6 +302,13 @@ export const paymentRouter = router({
 					});
 				}
 
+				if (payment.order.userId !== ctx.user.id) {
+					throw new TRPCError({
+						code: "FORBIDDEN",
+						message: "해당 결제에 대한 취소 권한이 없습니다",
+					});
+				}
+
 				// 토스페이먼츠 결제 취소 요청
 				const cancelData: { cancelReason: string; cancelAmount?: number } = {
 					cancelReason,
@@ -430,11 +317,11 @@ export const paymentRouter = router({
 					cancelData.cancelAmount = cancelAmount;
 				}
 
-				const tossResponse = await tossPaymentsRequest(
-					`payments/${paymentKey}/cancel`,
-					"POST",
-					cancelData,
-				);
+				const { raw: cancelRaw } = await cancelTossPayment({
+					paymentKey,
+					cancelReason,
+					cancelAmount,
+				});
 
 				// 트랜잭션 사용
 				const updatedPayment = await prisma.$transaction(async (tx) => {
@@ -450,7 +337,7 @@ export const paymentRouter = router({
 							cancelReason,
 							refundAmount:
 								(payment.refundAmount || 0) + (cancelAmount || payment.amount),
-							rawData: tossResponse,
+							rawData: cancelRaw as unknown as Prisma.InputJsonValue,
 						},
 					});
 
@@ -474,16 +361,13 @@ export const paymentRouter = router({
 				});
 
 				logger.info("Payment cancelled", {
+					paymentId: updatedPayment.id,
 					paymentKey,
 					cancelReason,
 					cancelAmount,
 				});
 
-				return {
-					success: true,
-					payment: updatedPayment,
-					tossResponse,
-				};
+				return { success: true, payment: updatedPayment };
 			} catch (error) {
 				logger.error("Failed to cancel payment", {
 					paymentKey,
@@ -498,60 +382,66 @@ export const paymentRouter = router({
 			}
 		}),
 
-	// 결제 정보 조회
-	get: publicProcedure.input(getPaymentSchema).query(async ({ input, ctx }) => {
-		const { paymentKey, orderId } = input;
+	// 결제 정보 조회 (인증 필요)
+	get: protectedProcedure
+		.input(getPaymentSchema)
+		.query(async ({ input, ctx }) => {
+			const { paymentKey, orderId } = input;
 
-		try {
-			const payment = await prisma.payment.findFirst({
-				where: paymentKey ? { paymentKey } : { orderId },
-				include: {
-					order: {
-						include: {
-							user: {
-								select: {
-									id: true,
-									email: true,
-									fullName: true,
+			try {
+				const payment = paymentKey
+					? await prisma.payment.findUnique({
+							where: { paymentKey },
+							include: {
+								order: {
+									include: {
+										user: { select: { id: true, email: true, fullName: true } },
+										items: { include: { product: true } },
+										address: true,
+									},
 								},
 							},
-							items: {
-								include: {
-									product: true,
+						})
+					: await prisma.payment.findUnique({
+							where: { orderId: orderId as string },
+							include: {
+								order: {
+									include: {
+										user: { select: { id: true, email: true, fullName: true } },
+										items: { include: { product: true } },
+										address: true,
+									},
 								},
 							},
-							address: true,
-						},
-					},
-				},
-			});
+						});
 
-			if (!payment) {
+				if (!payment) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: "결제 정보를 찾을 수 없습니다",
+					});
+				}
+
+				// 소유자 검증
+				if (payment.order.userId !== ctx.user.id) {
+					throw new TRPCError({
+						code: "FORBIDDEN",
+						message: "해당 결제에 접근할 수 없습니다",
+					});
+				}
+
+				return payment;
+			} catch (error) {
+				logger.error("Failed to get payment", { paymentKey, orderId, error });
 				throw new TRPCError({
-					code: "NOT_FOUND",
-					message: "결제 정보를 찾을 수 없습니다",
+					code: "INTERNAL_SERVER_ERROR",
+					message: "결제 정보 조회에 실패했습니다",
 				});
 			}
-
-			return payment;
-		} catch (error) {
-			logger.error("Failed to get payment", { paymentKey, orderId, error });
-			throw new TRPCError({
-				code: "INTERNAL_SERVER_ERROR",
-				message: "결제 정보 조회에 실패했습니다",
-			});
-		}
-	}),
+		}),
 
 	// 내 결제 목록 조회 (인증 필요)
 	getMyPayments: protectedProcedure.query(async ({ ctx }) => {
-		if (!ctx.user) {
-			throw new TRPCError({
-				code: "UNAUTHORIZED",
-				message: "로그인이 필요합니다",
-			});
-		}
-
 		try {
 			const payments = await prisma.payment.findMany({
 				where: {

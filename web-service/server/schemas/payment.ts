@@ -4,8 +4,6 @@ import { z } from "zod";
 export const createPaymentSchema = z.object({
 	orderId: z.string(),
 	customerKey: z.string().optional(), // 사용자 ID, 없으면 ANONYMOUS 사용
-	successUrl: z.string().url(),
-	failUrl: z.string().url(),
 });
 
 // 결제 승인 스키마
