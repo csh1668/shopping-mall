@@ -16,8 +16,8 @@ import {
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useCart } from "@/hooks/use-cart";
 import type { AppRouter } from "@/server/router";
-import { useCartStore } from "@/stores/cart-store";
 
 type RouterOutput = inferRouterOutputs<AppRouter>;
 type ProductInfo = RouterOutput["product"]["getBySlug"];
@@ -60,7 +60,7 @@ export function ProductClient({ product }: ProductClientProps) {
 		: 0;
 	const [quantity, setQuantity] = useState(1);
 	const [isWishlisted, setIsWishlisted] = useState(false);
-	const { addItem } = useCartStore();
+	const { addItem } = useCart();
 
 	const handleQuantityChange = (change: number) => {
 		const newQuantity = quantity + change;

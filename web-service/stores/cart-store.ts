@@ -16,7 +16,7 @@ interface CartStore {
 	items: CartItem[];
 	isOpen: boolean;
 
-	// Actions
+	// Basic actions - pure store operations only
 	addItem: (item: Omit<CartItem, "quantity">) => void;
 	removeItem: (id: string) => void;
 	updateQuantity: (id: string, quantity: number) => void;
@@ -24,11 +24,6 @@ interface CartStore {
 	openCart: () => void;
 	closeCart: () => void;
 	toggleCart: () => void;
-
-	// Getters
-	getTotalItems: () => number;
-	getTotalPrice: () => number;
-	getOriginalTotalPrice: () => number;
 }
 
 export const useCartStore = create<CartStore>()(
@@ -63,11 +58,6 @@ export const useCartStore = create<CartStore>()(
 			},
 
 			updateQuantity: (id, quantity) => {
-				if (quantity <= 0) {
-					get().removeItem(id);
-					return;
-				}
-
 				set({
 					items: get().items.map((item) =>
 						item.id === id ? { ...item, quantity } : item,
@@ -89,25 +79,6 @@ export const useCartStore = create<CartStore>()(
 
 			toggleCart: () => {
 				set({ isOpen: !get().isOpen });
-			},
-
-			getTotalItems: () => {
-				return get().items.reduce((total, item) => total + item.quantity, 0);
-			},
-
-			getTotalPrice: () => {
-				return get().items.reduce(
-					(total, item) => total + item.price * item.quantity,
-					0,
-				);
-			},
-
-			getOriginalTotalPrice: () => {
-				return get().items.reduce(
-					(total, item) =>
-						total + (item.originalPrice || item.price) * item.quantity,
-					0,
-				);
 			},
 		}),
 		{

@@ -9,8 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
-import { useCartStore } from "@/stores/cart-store";
 
 const recommendedProducts = [
 	{
@@ -51,10 +51,9 @@ export default function CartPage() {
 		updateQuantity,
 		removeItem,
 		clearCart,
-		getTotalPrice,
-		getOriginalTotalPrice,
 		addItem,
-	} = useCartStore();
+		discountAmount,
+	} = useCart();
 
 	const [selectedItems, setSelectedItems] = useState<string[]>(
 		items.map((item) => item.id),
@@ -65,10 +64,6 @@ export default function CartPage() {
 		discount: number;
 	} | null>(null);
 	const { toast } = useToast();
-
-	const totalPrice = getTotalPrice();
-	const originalTotalPrice = getOriginalTotalPrice();
-	const totalSavings = originalTotalPrice - totalPrice;
 
 	// 선택된 아이템들의 총 가격
 	const selectedTotalPrice = items
@@ -376,10 +371,10 @@ export default function CartPage() {
 										<span>상품금액</span>
 										<span>{selectedTotalPrice.toLocaleString()}원</span>
 									</div>
-									{totalSavings > 0 && (
+									{discountAmount > 0 && (
 										<div className="flex justify-between text-green-600">
 											<span>상품할인</span>
-											<span>-{totalSavings.toLocaleString()}원</span>
+											<span>-{discountAmount.toLocaleString()}원</span>
 										</div>
 									)}
 									{appliedCoupon && (

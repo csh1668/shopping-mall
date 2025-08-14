@@ -7,12 +7,13 @@ import { CreateOrderForm } from "@/components/order/create-order-form";
 import { PaymentModal } from "@/components/payment/payment-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { type CartItem, useCartStore } from "@/stores/cart-store";
+import { useCart } from "@/hooks/use-cart";
+import type { CartItem } from "@/stores/cart-store";
 
 export function CreateOrderPageContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const { items } = useCartStore();
+	const { items } = useCart();
 
 	const [selectedItems, setSelectedItems] = useState<CartItem[]>([]);
 	const [totalAmount, setTotalAmount] = useState(0);

@@ -11,23 +11,21 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@/components/ui/sheet";
-import { useCartStore } from "@/stores/cart-store";
+import { useCart } from "@/hooks/use-cart";
 
 export function CartSidebar() {
 	const {
 		items,
 		isOpen,
 		closeCart,
-		updateQuantity,
+		decreaseQuantity,
+		increaseQuantity,
 		removeItem,
-		getTotalPrice,
-		getOriginalTotalPrice,
-		getTotalItems,
-	} = useCartStore();
-
-	const totalPrice = getTotalPrice();
-	const originalTotalPrice = getOriginalTotalPrice();
-	const totalSavings = originalTotalPrice - totalPrice;
+		totalPrice,
+		originalTotalPrice,
+		discountAmount,
+		totalItems,
+	} = useCart();
 
 	return (
 		<Sheet open={isOpen} onOpenChange={closeCart}>
@@ -35,7 +33,7 @@ export function CartSidebar() {
 				<SheetHeader>
 					<SheetTitle className="flex items-center gap-2">
 						<LucideIcon name="ShoppingBag" className="h-5 w-5" />
-						장바구니 ({getTotalItems()}개)
+						장바구니 ({totalItems}개)
 					</SheetTitle>
 				</SheetHeader>
 
@@ -100,9 +98,7 @@ export function CartSidebar() {
 															variant="outline"
 															size="icon"
 															className="h-6 w-6 bg-transparent"
-															onClick={() =>
-																updateQuantity(item.id, item.quantity - 1)
-															}
+															onClick={() => decreaseQuantity(item.id)}
 														>
 															<LucideIcon name="Minus" className="h-3 w-3" />
 														</Button>
@@ -113,9 +109,7 @@ export function CartSidebar() {
 															variant="outline"
 															size="icon"
 															className="h-6 w-6 bg-transparent"
-															onClick={() =>
-																updateQuantity(item.id, item.quantity + 1)
-															}
+															onClick={() => increaseQuantity(item.id)}
 														>
 															<LucideIcon name="Plus" className="h-3 w-3" />
 														</Button>
@@ -140,7 +134,7 @@ export function CartSidebar() {
 							{/* Cart Summary */}
 							<div className="py-4 space-y-4">
 								<div className="space-y-2">
-									{totalSavings > 0 && (
+									{discountAmount > 0 && (
 										<div className="flex justify-between text-sm">
 											<span className="text-muted-foreground">원래 가격</span>
 											<span className="line-through text-muted-foreground">
@@ -148,11 +142,11 @@ export function CartSidebar() {
 											</span>
 										</div>
 									)}
-									{totalSavings > 0 && (
+									{discountAmount > 0 && (
 										<div className="flex justify-between text-sm">
 											<span className="text-green-600">할인 금액</span>
 											<span className="text-green-600 font-medium">
-												-{totalSavings.toLocaleString()}원
+												-{discountAmount.toLocaleString()}원
 											</span>
 										</div>
 									)}

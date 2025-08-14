@@ -8,7 +8,7 @@ import { SearchBar } from "@/components/search";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useCartStore } from "@/stores/cart-store";
+import { useCart } from "@/hooks/use-cart";
 
 const categories = [
 	{ name: "패션", href: "/c/fashion" },
@@ -23,8 +23,7 @@ export function Header() {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 	const [lastScrollY, setLastScrollY] = useState(0);
-	const { toggleCart, getTotalItems } = useCartStore();
-	const totalItems = getTotalItems();
+	const { toggleCart, totalItems } = useCart();
 
 	useEffect(() => {
 		const controlHeader = () => {
