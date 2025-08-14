@@ -1,4 +1,5 @@
 import { createServerSideHelpers } from "@trpc/react-query/server";
+import superjson from "superjson";
 import { supabase } from "@/lib/supabase-client";
 import { appRouter } from "./router";
 
@@ -10,5 +11,5 @@ export const sTrpc = createServerSideHelpers({
 		user: null,
 		isAuthenticated: false,
 	},
-	// transformer: superjson,
+	transformer: superjson,
 });

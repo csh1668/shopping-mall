@@ -1,6 +1,8 @@
 "use client";
 
 import { CheckCircle, Loader2, Package } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -27,49 +29,69 @@ export function PaymentSuccess() {
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: 중복 실행 방지를 위해 최소한의 의존성만 포함
 	useEffect(() => {
-		async function confirmPayment() {
-			// 이미 처리되었거나 필수 파라미터가 없는 경우 중단
+		async function handleSuccessFlow() {
 			if (isProcessed || !paymentKey || !orderId || !amount) {
 				if (!paymentKey || !orderId || !amount) {
-					console.error("필수 파라미터가 누락되었습니다.");
 					router.push("/cart");
 				}
 				return;
 			}
 
-			// 처리 플래그 설정으로 중복 실행 방지
 			setIsProcessed(true);
+			setIsConfirming(true);
 
 			try {
-				setIsConfirming(true);
+				// 1) 선확인: 이미 PAID면 승인 생략
+				const pre = await refetch();
+				if (pre.data && pre.data.status === "PAID") {
+					setIsConfirming(false);
+					return;
+				}
 
-				// 결제 승인 요청
+				// 2) 승인 시도
 				await confirmPaymentMutation.mutateAsync({
 					paymentKey,
 					orderId,
 					amount: Number(amount),
 				});
 
-				// 결제 정보 다시 조회
 				await refetch();
-			} catch (error) {
-				console.error("결제 승인 실패:", error);
-				router.push(
-					`/payment/fail?orderId=${orderId}&message=결제 승인에 실패했습니다`,
-				);
+			} catch (err: unknown) {
+				const anyErr = err as {
+					data?: { code?: string };
+					shape?: { data?: { code?: string } };
+				};
+				const code = anyErr?.data?.code || anyErr?.shape?.data?.code;
+				if (code === "UNAUTHORIZED") {
+					router.push(
+						`/auth?redirect=/payment/success?orderId=${orderId}&paymentKey=${paymentKey}&amount=${amount}`,
+					);
+					return;
+				}
+				// 3) 폴백: 짧은 폴링으로 상태 재확인
+				try {
+					for (let i = 0; i < 3; i++) {
+						const r = await refetch();
+						if (r.data && r.data.status === "PAID") break;
+						await new Promise((res) => setTimeout(res, 800));
+					}
+				} catch {
+					// ignore
+				}
+
+				const latest = await refetch();
+				if (!latest.data || latest.data.status !== "PAID") {
+					router.push(
+						`/payment/fail?orderId=${orderId}&message=결제 승인에 실패했습니다&code=${encodeURIComponent(code || "UNKNOWN")}`,
+					);
+				}
 			} finally {
 				setIsConfirming(false);
 			}
 		}
 
-		// 2초 지연 후 실행
-		const timer = setTimeout(() => {
-			confirmPayment();
-		}, 2000);
-
-		// 클린업 함수로 타이머 정리
-		return () => clearTimeout(timer);
-	}, []); // 의존성 배열을 비워서 컴포넌트 마운트 시에만 실행
+		void handleSuccessFlow();
+	}, []);
 
 	if (isConfirming) {
 		return (
@@ -103,6 +125,19 @@ export function PaymentSuccess() {
 			</div>
 		);
 	}
+
+	const receiptUrl: string | null = (() => {
+		const raw = paymentData?.rawData as unknown;
+		if (
+			raw &&
+			typeof raw === "object" &&
+			"receipt" in (raw as Record<string, unknown>)
+		) {
+			const r = (raw as { receipt?: { url?: string } }).receipt;
+			return r?.url ?? null;
+		}
+		return null;
+	})();
 
 	return (
 		<div className="container mx-auto px-4 py-8">
@@ -142,20 +177,20 @@ export function PaymentSuccess() {
 							</div>
 							<div>
 								<p className="text-sm text-muted-foreground">결제 수단</p>
-								<p>{paymentData.method || "카드"}</p>
+								<p>{String(paymentData.method || "카드") as string}</p>
 							</div>
 							<div>
 								<p className="text-sm text-muted-foreground">결제 금액</p>
 								<p className="text-lg font-semibold">
-									{paymentData.amount.toLocaleString()}원
+									{Number(paymentData.amount).toLocaleString()}원
 								</p>
 							</div>
 						</div>
 
-						{paymentData.approvedAt && (
+						{!!paymentData.approvedAt && (
 							<div>
 								<p className="text-sm text-muted-foreground">결제 완료 시간</p>
-								<p>{new Date(paymentData.approvedAt).toLocaleString()}</p>
+								<p>{paymentData.approvedAt.toLocaleString()}</p>
 							</div>
 						)}
 					</CardContent>
@@ -171,34 +206,61 @@ export function PaymentSuccess() {
 					</CardHeader>
 					<CardContent>
 						<div className="space-y-4">
-							{paymentData.order.items.map((item: any) => (
+							{paymentData.order.items.map((item) => (
 								<div
 									key={item.id}
 									className="flex justify-between items-center"
 								>
 									<div className="flex items-center space-x-4">
-										{item.image && (
-											<img
-												src={item.image}
-												alt={item.name}
-												className="w-12 h-12 object-cover rounded"
-											/>
+										{item.product?.previewImage && (
+											<div className="w-12 h-12 rounded overflow-hidden bg-muted">
+												<Image
+													src={item.product?.previewImage || ""}
+													alt={item.product?.name || ""}
+													width={48}
+													height={48}
+													className="object-cover"
+												/>
+											</div>
 										)}
 										<div>
-											<h4 className="font-medium">{item.name}</h4>
+											<h4 className="font-medium">
+												{item.product?.name || item.name}
+											</h4>
 											<p className="text-sm text-muted-foreground">
 												수량: {item.quantity}개
 											</p>
 										</div>
 									</div>
 									<p className="font-semibold">
-										{(item.price * item.quantity).toLocaleString()}원
+										{(
+											(item.product?.price ?? item.price ?? 0) * item.quantity
+										).toLocaleString()}
+										원
 									</p>
 								</div>
 							))}
 						</div>
 					</CardContent>
 				</Card>
+
+				{/* 영수증 링크 */}
+				{receiptUrl && (
+					<Card>
+						<CardHeader>
+							<CardTitle>영수증</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<Link
+								href={receiptUrl}
+								className="text-primary underline"
+								target="_blank"
+							>
+								영수증 확인하기
+							</Link>
+						</CardContent>
+					</Card>
+				)}
 
 				{/* 배송 정보 */}
 				{paymentData.order.address && (

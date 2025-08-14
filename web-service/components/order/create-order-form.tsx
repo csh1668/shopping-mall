@@ -12,7 +12,6 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { publicEnv } from "@/public-env";
 import { trpc } from "@/server/client";
 import type { CartItem } from "@/stores/cart-store";
 import { usePaymentStore } from "@/stores/payment-store";

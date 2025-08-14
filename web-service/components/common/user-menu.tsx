@@ -19,7 +19,6 @@ import { trpc } from "@/server/client";
 export function UserMenu() {
 	const { user, signOut } = useAuth();
 
-	// tRPC Hook 사용 - 자동 캐싱, 리팩토링, 로딩 상태 관리
 	const { data: metadata, isLoading } = trpc.user.getUserMetadata.useQuery(
 		undefined,
 		{ enabled: !!user }, // 로그인된 경우만 쿼리 실행

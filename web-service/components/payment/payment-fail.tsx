@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, RefreshCw, XCircle } from "lucide-react";
+import { Home, LifeBuoy, RefreshCw, XCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +18,7 @@ export function PaymentFail() {
 	};
 
 	const getErrorMessage = () => {
-		// 토스페이먼츠 에러 코드에 따른 메시지 매핑
+		// 토스페이먼츠 SDK/API 에러 코드 주요 매핑 (추가 확장 가능)
 		const errorMessages: Record<string, string> = {
 			PAY_PROCESS_CANCELED: "사용자가 결제를 취소했습니다",
 			PAY_PROCESS_ABORTED: "결제 진행 중 오류가 발생했습니다",
@@ -30,6 +30,13 @@ export function PaymentFail() {
 			EXCEED_MAX_ONE_DAY_PAYMENT_AMOUNT: "일일 결제 금액을 초과했습니다",
 			NOT_ENOUGH_BALANCE: "계좌 잔액이 부족합니다",
 			INVALID_ACCOUNT_INFO: "계좌 정보가 올바르지 않습니다",
+			// 일반화된 네트워크/타임아웃류 보강
+			NETWORK_ERROR: "네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요",
+			TIMEOUT:
+				"응답 지연으로 결제가 확인되지 않았습니다. 잠시 후 다시 시도해주세요",
+			USER_CANCEL: "사용자가 결제를 취소했습니다",
+			ALREADY_PROCESSED: "이미 처리된 결제입니다",
+			DUPLICATED_ORDER_ID: "중복된 주문번호입니다",
 		};
 
 		return code && errorMessages[code] ? errorMessages[code] : message;
@@ -130,8 +137,10 @@ export function PaymentFail() {
 						<p className="text-sm text-muted-foreground">
 							결제 문제가 해결되지 않나요?
 						</p>
-						<Button variant="link" className="p-0 h-auto">
-							고객센터 문의하기
+						<Button variant="link" className="p-0 h-auto" asChild>
+							<a href="/support" className="inline-flex items-center gap-1">
+								<LifeBuoy className="h-4 w-4" /> 고객센터 문의하기
+							</a>
 						</Button>
 					</CardContent>
 				</Card>
